@@ -14,7 +14,6 @@ export default function Jogar() {
   return (
     // Cenário fixo: fundo de floresta/selva
     <div style={styles.pagina}>
-
       {/* Tela de vitória aparece por cima de tudo quando venceu */}
       {venceu && <TelaVitoria />}
 
@@ -32,7 +31,9 @@ export default function Jogar() {
       <div style={styles.centro}>
         <div style={styles.contador}>
           <p style={styles.qtd}>{Math.floor(bananas).toLocaleString()} 🍌</p>
-          <p style={styles.info}>+{porClique} por clique &nbsp;|&nbsp; +{porSegundo}/s</p>
+          <p style={styles.info}>
+            +{porClique} por clique &nbsp;|&nbsp; +{porSegundo}/s
+          </p>
         </div>
 
         <Macaco />
@@ -44,25 +45,30 @@ export default function Jogar() {
       {/* Barra de meta na parte de baixo */}
       <div style={styles.barraArea}>
         <div style={styles.barraLabel}>
-          <span>Meta: {Math.floor(bananas).toLocaleString()} / {META.toLocaleString()} 🍌</span>
+          <span>
+            Meta: {Math.floor(bananas).toLocaleString()} /{" "}
+            {META.toLocaleString()} 🍌
+          </span>
           <span>{progresso.toFixed(1)}%</span>
         </div>
         <div style={styles.barraFundo}>
-          <div style={{ ...styles.barraPreenchimento, width: `${progresso}%` }} />
+          <div
+            style={{ ...styles.barraPreenchimento, width: `${progresso}%` }}
+          />
         </div>
       </div>
-
     </div>
   );
 }
 
 const styles = {
   pagina: {
-    flex: 1,
     position: "relative",
-    minHeight: "calc(100vh - 60px)",
-    // Cenário fixo — pode trocar esta cor/imagem pelo cenário que quiser
-    background: "#e8f5e9",
+    height: "calc(100vh - 60px)",
+    backgroundImage: "url('/images/fundo.png')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -82,7 +88,7 @@ const styles = {
     textAlign: "center",
     marginBottom: 8,
   },
-  qtd:  { fontSize: 32, fontWeight: "bold", margin: 0 },
+  qtd: { fontSize: 32, fontWeight: "bold", margin: 0 },
   info: { fontSize: 13, margin: "4px 0 0", color: "#555" },
 
   // Barra de meta

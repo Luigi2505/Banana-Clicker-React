@@ -3,7 +3,7 @@ import { useGame } from "../context/GameContext";
 
 // Componente do macaco clicável com números flutuantes
 export default function Macaco() {
-  const { clicarMacaco, porClique, fundoAtual } = useGame();
+  const { clicarMacaco, porClique } = useGame();
   const [flutuantes, setFlutuantes] = useState([]);
 
   // Remove números flutuantes após a animação terminar
@@ -20,14 +20,20 @@ export default function Macaco() {
 
   return (
     <div style={styles.area}>
-      <button style={styles.btn} onClick={handleClick}>🐵</button>
+      <button
+        style={styles.btn}
+        onClick={handleClick}
+        className="clicker-container"
+      >
+        <img
+          src="public/images/macaco-clicker.png"
+          alt="Macaco Clicker"
+          className="macaco-clicker"
+        />
+      </button>
 
       {flutuantes.map((id) => (
-        <span key={id} style={{
-          ...styles.flutuante,
-          color: fundoAtual.url ? "#fff" : "#555",
-          textShadow: fundoAtual.url ? "0 1px 4px #000" : "none",
-        }}>
+        <span key={id} style={styles.flutuante}>
           +{porClique} 🍌
         </span>
       ))}

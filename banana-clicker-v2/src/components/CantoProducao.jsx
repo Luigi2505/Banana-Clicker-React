@@ -9,10 +9,10 @@ export default function CantoProducao({ item, quantidade, canto }) {
 
   // Posição absoluta de cada canto
   const posicao = {
-    "superior-esquerdo": { top: 70,   left: 0   },
-    "inferior-esquerdo": { bottom: 80, left: 0  },
-    "superior-direito":  { top: 70,   right: 0  },
-    "inferior-direito":  { bottom: 80, right: 0 },
+    "superior-esquerdo": { top: 8, left: 8 },
+    "inferior-esquerdo": { bottom: 50, left: 8 },
+    "superior-direito": { top: 8, right: 8 },
+    "inferior-direito": { bottom: 50, right: 8 },
   }[canto];
 
   // Direção que os emojis se organizam (grade)
@@ -20,16 +20,18 @@ export default function CantoProducao({ item, quantidade, canto }) {
 
   return (
     <div style={{ ...styles.canto, ...posicao, alignItems: alinhamento }}>
-      <p style={styles.label}>{item.nome} <strong>x{quantidade}</strong></p>
       <div style={{ ...styles.grade, justifyContent: alinhamento }}>
         {emojis.map((_, i) => (
-          <span key={i} style={{
-            ...styles.emoji,
-            // Pequeno atraso na animação de cada emoji para ficarem alternados
-            animationDelay: `${(i * 0.3) % 1.5}s`,
-          }}>
-            {item.emoji}
-          </span>
+          <img
+            key={i}
+            src={item.imagem}
+            style={{
+              width: 80,
+              height: 80,
+              animationDelay: `${(i * 0.3) % 1.5}s`,
+              animation: "balanco 1.5s ease-in-out infinite",
+            }}
+          />
         ))}
       </div>
     </div>
