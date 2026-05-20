@@ -1,8 +1,7 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 
-export const META = 50000; // meta de bananas para vencer
+export const META = 50000;
 
-// Itens de produção — 4 apenas, um por canto da tela
 export const ITENS_PRODUCAO = [
   {
     id: "p1",
@@ -38,7 +37,6 @@ export const ITENS_PRODUCAO = [
   },
 ];
 
-// Power-ups de clique — compra única
 export const ITENS_POWERUP = [
   {
     id: "u1",
@@ -100,6 +98,10 @@ export function GameProvider({ children }) {
   });
   const [powerupsComprados, setPowerupsComprados] = useState({});
   const [venceu, setVenceu] = useState(false);
+  const [cps, setCps] = useState(0);
+
+  // Ref conta cliques no segundo atual sem causar re-renders
+  const cliquesNoSegundo = useRef(0);
 
   // Produção automática a cada segundo
   useEffect(() => {
@@ -115,7 +117,17 @@ export function GameProvider({ children }) {
     return () => clearInterval(intervalo);
   }, [porSegundo]);
 
+  // Atualiza CPS a cada segundo
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      setCps(cliquesNoSegundo.current);
+      cliquesNoSegundo.current = 0;
+    }, 1000);
+    return () => clearInterval(intervalo);
+  }, []);
+
   function clicarMacaco() {
+    cliquesNoSegundo.current += 1;
     setBananas((b) => {
       const novo = b + porClique;
       if (novo >= META) setVenceu(true);
@@ -149,6 +161,8 @@ export function GameProvider({ children }) {
     setQtdProducao({ p1: 0, p2: 0, p3: 0, p4: 0 });
     setPowerupsComprados({});
     setVenceu(false);
+    setCps(0);
+    cliquesNoSegundo.current = 0;
   }
 
   const valor = {
@@ -158,6 +172,7 @@ export function GameProvider({ children }) {
     qtdProducao,
     powerupsComprados,
     venceu,
+    cps,
     clicarMacaco,
     precoProducao,
     comprarProducao,

@@ -47,12 +47,12 @@ button {
 /* Animação de balanço dos emojis nos cantos */
 @keyframes balanco {
   0% {
-    transform: rotate(-8deg);
+    transform: rotate(-4deg);
   }
   50% {
-    transform: rotate(8deg);
+    transform: rotate(4deg);
   }
   100% {
-    transform: rotate(-8deg);
+    transform: rotate(-4deg);
   }
 }

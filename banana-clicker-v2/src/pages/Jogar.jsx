@@ -6,18 +6,15 @@ import InventarioPowerups from "../components/InventarioPowerups";
 import TelaVitoria from "../components/TelaVitoria";
 
 export default function Jogar() {
-  const { bananas, porClique, porSegundo, qtdProducao, venceu } = useGame();
+  const { bananas, porClique, porSegundo, qtdProducao, venceu, cps } =
+    useGame();
 
-  // Progresso em percentual para a barra de meta
   const progresso = Math.min((bananas / META) * 100, 100);
 
   return (
-    // Cenário fixo: fundo de floresta/selva
     <div style={styles.pagina}>
-      {/* Tela de vitória aparece por cima de tudo quando venceu */}
       {venceu && <TelaVitoria />}
 
-      {/* Emojis de produção nos 4 cantos */}
       {ITENS_PRODUCAO.map((item) => (
         <CantoProducao
           key={item.id}
@@ -27,22 +24,20 @@ export default function Jogar() {
         />
       ))}
 
-      {/* Centro: contador + macaco */}
       <div style={styles.centro}>
         <div style={styles.contador}>
           <p style={styles.qtd}>{Math.floor(bananas).toLocaleString()} 🍌</p>
           <p style={styles.info}>
             +{porClique} por clique &nbsp;|&nbsp; +{porSegundo}/s
           </p>
+          <p style={styles.info}>CPS: {cps}</p>
         </div>
 
         <Macaco />
       </div>
 
-      {/* Inventário de power-ups comprados (centro inferior) */}
       <InventarioPowerups />
 
-      {/* Barra de meta na parte de baixo */}
       <div style={styles.barraArea}>
         <div style={styles.barraLabel}>
           <span>
@@ -90,8 +85,6 @@ const styles = {
   },
   qtd: { fontSize: 32, fontWeight: "bold", margin: 0 },
   info: { fontSize: 13, margin: "4px 0 0", color: "#555" },
-
-  // Barra de meta
   barraArea: {
     position: "absolute",
     bottom: 0,
