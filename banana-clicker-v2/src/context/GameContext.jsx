@@ -80,6 +80,53 @@ export const ITENS_POWERUP = [
   },
 ];
 
+// Itens permanentes comprados com dinheiro real (pagamento integrado depois)
+export const ITENS_PERMANENTES = [
+  {
+    id: "ip1",
+    nome: "Salto Temporal — 4h",
+    emoji: "⏩",
+    preco: "R$ 2,99",
+    descricao: "Recebe instantaneamente 4h de producao idle acumulada.",
+    tipo: "timeskip",
+    horas: 4,
+  },
+  {
+    id: "ip2",
+    nome: "Salto Temporal — 8h",
+    emoji: "⏭",
+    preco: "R$ 4,99",
+    descricao: "Recebe instantaneamente 8h de producao idle acumulada.",
+    tipo: "timeskip",
+    horas: 8,
+  },
+  {
+    id: "ip3",
+    nome: "Salto Temporal — 24h",
+    emoji: "🕰",
+    preco: "R$ 9,99",
+    descricao: "Recebe instantaneamente 24h de producao idle acumulada.",
+    tipo: "timeskip",
+    horas: 24,
+  },
+  {
+    id: "ip4",
+    nome: "DNA Mutante",
+    emoji: "🧬",
+    preco: "R$ 14,99",
+    descricao: "Multiplica toda geracao de bananas por 2x para sempre.",
+    tipo: "multiplicador",
+  },
+  {
+    id: "ip5",
+    nome: "Macaco Ciborgue",
+    emoji: "🤖",
+    preco: "R$ 7,99",
+    descricao: "Clica automaticamente 10x por segundo enquanto jogar.",
+    tipo: "autoclicker",
+  },
+];
+
 const GameContext = createContext();
 
 export function useGame() {
@@ -97,39 +144,56 @@ export function GameProvider({ children }) {
     p4: 0,
   });
   const [powerupsComprados, setPowerupsComprados] = useState({});
+  const [permanentesComprados, setPermanentesComprados] = useState({});
   const [venceu, setVenceu] = useState(false);
   const [cps, setCps] = useState(0);
 
-  // Ref conta cliques no segundo atual sem causar re-renders
   const cliquesNoSegundo = useRef(0);
+
+  // Multiplicador global ativo se DNA Mutante foi comprado
+  const multGlobal = permanentesComprados["ip4"] ? 2 : 1;
 
   // Produção automática a cada segundo
   useEffect(() => {
     const intervalo = setInterval(() => {
-      if (porSegundo > 0) {
+      const producao = porSegundo * multGlobal;
+      if (producao > 0) {
         setBananas((b) => {
-          const novo = b + porSegundo;
+          const novo = b + producao;
           if (novo >= META) setVenceu(true);
           return novo;
         });
       }
     }, 1000);
     return () => clearInterval(intervalo);
-  }, [porSegundo]);
+  }, [porSegundo, multGlobal]);
 
-  // Atualiza CPS a cada segundo
+  // Autoclicker — 10 cliques/s se Macaco Ciborgue estiver ativo
+  useEffect(() => {
+    if (!permanentesComprados["ip5"]) return;
+    const intervalo = setInterval(() => {
+      setBananas((b) => {
+        const novo = b + porClique * multGlobal * 10;
+        if (novo >= META) setVenceu(true);
+        return novo;
+      });
+    }, 1000);
+    return () => clearInterval(intervalo);
+  }, [permanentesComprados, porClique, multGlobal]);
+
+  // Atualiza CPS a cada 200ms
   useEffect(() => {
     const intervalo = setInterval(() => {
       setCps(cliquesNoSegundo.current);
       cliquesNoSegundo.current = 0;
-    }, 1000);
+    }, 200);
     return () => clearInterval(intervalo);
   }, []);
 
   function clicarMacaco() {
     cliquesNoSegundo.current += 1;
     setBananas((b) => {
-      const novo = b + porClique;
+      const novo = b + porClique * multGlobal;
       if (novo >= META) setVenceu(true);
       return novo;
     });
@@ -154,12 +218,30 @@ export function GameProvider({ children }) {
     setPowerupsComprados((c) => ({ ...c, [item.id]: true }));
   }
 
+  // Simula compra permanente — futuramente conecta com pagamento real
+  function comprarPermanente(item) {
+    if (item.tipo === "timeskip") {
+      // Timeskip pode ser comprado várias vezes
+      const ganho = porSegundo * item.horas * 3600;
+      setBananas((b) => {
+        const novo = b + ganho;
+        if (novo >= META) setVenceu(true);
+        return novo;
+      });
+      return;
+    }
+    // Multiplicador e autoclicker são compra única
+    if (permanentesComprados[item.id]) return;
+    setPermanentesComprados((c) => ({ ...c, [item.id]: true }));
+  }
+
   function reiniciar() {
     setBananas(0);
     setPorClique(1);
     setPorSegundo(0);
     setQtdProducao({ p1: 0, p2: 0, p3: 0, p4: 0 });
     setPowerupsComprados({});
+    setPermanentesComprados({});
     setVenceu(false);
     setCps(0);
     cliquesNoSegundo.current = 0;
@@ -171,12 +253,15 @@ export function GameProvider({ children }) {
     porSegundo,
     qtdProducao,
     powerupsComprados,
+    permanentesComprados,
     venceu,
     cps,
+    multGlobal,
     clicarMacaco,
     precoProducao,
     comprarProducao,
     comprarPowerUp,
+    comprarPermanente,
     reiniciar,
   };
 

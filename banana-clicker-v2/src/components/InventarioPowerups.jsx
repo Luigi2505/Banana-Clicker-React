@@ -1,65 +1,111 @@
 import { useState } from "react";
-import { ITENS_POWERUP } from "../context/GameContext";
+import { ITENS_POWERUP, ITENS_PERMANENTES } from "../context/GameContext";
 import { useGame } from "../context/GameContext";
 
-// Exibe os power-ups já comprados pelo jogador
-// Ao passar o mouse, o emoji cresce e aparece uma descrição
 export default function InventarioPowerups() {
-  const { powerupsComprados } = useGame();
-  const [hoverId, setHoverId] = useState(null); // qual power-up está com hover
+  const { powerupsComprados, permanentesComprados } = useGame();
+  const [hoverId, setHoverId] = useState(null);
 
-  // Filtra só os que foram comprados
-  const comprados = ITENS_POWERUP.filter((pu) => powerupsComprados[pu.id]);
+  const powerupsAtivos = ITENS_POWERUP.filter((pu) => powerupsComprados[pu.id]);
+  // Timeskip não aparece no inventário (não é permanente de verdade)
+  const permanentesAtivos = ITENS_PERMANENTES.filter(
+    (it) => it.tipo !== "timeskip" && permanentesComprados[it.id],
+  );
 
-  if (comprados.length === 0) return null;
+  if (powerupsAtivos.length === 0 && permanentesAtivos.length === 0)
+    return null;
 
   return (
-    <div style={styles.inventario}>
-      <p style={styles.titulo}>Seus power-ups:</p>
-      <div style={styles.lista}>
-        {comprados.map((pu) => (
-          <div
-            key={pu.id}
-            style={styles.wrapper}
-            onMouseEnter={() => setHoverId(pu.id)}
-            onMouseLeave={() => setHoverId(null)}
-          >
-            {/* Emoji do power-up — cresce no hover */}
-            <span style={{
-              ...styles.emoji,
-              fontSize: hoverId === pu.id ? 38 : 28,
-              transition: "font-size 0.15s ease",
-            }}>
-              {pu.emoji}
-            </span>
-
-            {/* Tooltip que aparece no hover */}
-            {hoverId === pu.id && (
-              <div style={styles.tooltip}>
-                <strong>{pu.nome}</strong>
-                <p style={{ margin: "4px 0 0", fontSize: 11 }}>{pu.descricao}</p>
-              </div>
-            )}
+    <div style={styles.container}>
+      {/* Barra 1: Power-ups */}
+      {powerupsAtivos.length > 0 && (
+        <div style={styles.barra}>
+          <p style={styles.titulo}>Power-ups:</p>
+          <div style={styles.lista}>
+            {powerupsAtivos.map((pu) => (
+              <ItemInventario
+                key={pu.id}
+                id={pu.id}
+                emoji={pu.emoji}
+                nome={pu.nome}
+                descricao={pu.descricao}
+                hoverId={hoverId}
+                setHoverId={setHoverId}
+              />
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* Barra 2: Itens Permanentes ativos */}
+      {permanentesAtivos.length > 0 && (
+        <div style={styles.barra}>
+          <p style={styles.titulo}>Permanentes:</p>
+          <div style={styles.lista}>
+            {permanentesAtivos.map((it) => (
+              <ItemInventario
+                key={it.id}
+                id={it.id}
+                emoji={it.emoji}
+                nome={it.nome}
+                descricao={it.descricao}
+                hoverId={hoverId}
+                setHoverId={setHoverId}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Componente interno reutilizável para cada item do inventário
+function ItemInventario({ id, emoji, nome, descricao, hoverId, setHoverId }) {
+  return (
+    <div
+      style={styles.wrapper}
+      onMouseEnter={() => setHoverId(id)}
+      onMouseLeave={() => setHoverId(null)}
+    >
+      <span
+        style={{
+          ...styles.emoji,
+          fontSize: hoverId === id ? 38 : 28,
+          transition: "font-size 0.15s ease",
+        }}
+      >
+        {emoji}
+      </span>
+
+      {hoverId === id && (
+        <div style={styles.tooltip}>
+          <strong>{nome}</strong>
+          <p style={{ margin: "4px 0 0", fontSize: 11 }}>{descricao}</p>
+        </div>
+      )}
     </div>
   );
 }
 
 const styles = {
-  inventario: {
+  container: {
     position: "absolute",
     bottom: 90,
     left: "50%",
     transform: "translateX(-50%)",
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+    zIndex: 10,
+  },
+  barra: {
     background: "rgba(255,255,255,0.9)",
     border: "1px solid #aaa",
     padding: "6px 16px",
     display: "flex",
     alignItems: "center",
     gap: 12,
-    zIndex: 10,
   },
   titulo: {
     fontSize: 12,
