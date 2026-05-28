@@ -8,8 +8,20 @@ export default function Header() {
   const location = useLocation();
 
   async function sair() {
-    await salvarJogo(); // Salva antes de sair
-    await signOut(auth);
+    console.log("Iniciando processo de logout...");
+
+    // Dispara o salvamento de forma assíncrona. Se travar, o catch captura e a vida segue.
+    // NUNCA dê await nisso durante um logout.
+    salvarJogo().catch((e) =>
+      console.warn("Falha ao salvar no banco antes de sair:", e),
+    );
+
+    try {
+      await authService.sair();
+      console.log("Logout efetuado. Redirecionando...");
+    } catch (e) {
+      console.error("Erro ao deslogar o usuário:", e);
+    }
   }
 
   const linkStyle = (path) => ({

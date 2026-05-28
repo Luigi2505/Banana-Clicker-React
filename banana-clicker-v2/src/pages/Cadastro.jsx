@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "../firebase";
 import { Link, useNavigate } from "react-router-dom";
+import { authService } from "../services/auth.service";
+import { dbService } from "../services/db.service";
 
 export default function Cadastro() {
   const [nome, setNome] = useState("");
@@ -26,15 +25,11 @@ export default function Cadastro() {
     }
 
     try {
-      const credencial = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        senha,
-      );
+      const credencial = await authService.cadastrar(email, senha);
       const usuario = credencial.user;
 
-      // Cria o documento do jogador no Firestore com progresso inicial zerado
-      await setDoc(doc(db, "usuarios", usuario.uid), {
+      // Cria o documento do jogador no Firestore via serviço com progresso inicial zerado
+      await dbService.criarPerfil(usuario.uid, {
         nome,
         nomePerfil,
         email,

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { db, auth } from "../firebase";
+import { auth } from "../firebase";
+import { dbService } from "../services/db.service";
 
 export const META = 50000;
 
@@ -146,7 +146,7 @@ export function GameProvider({ children }) {
   });
   const [powerupsComprados, setPowerupsComprados] = useState({});
   const [permanentesComprados, setPermanentesComprados] = useState({});
-  const [dinheiro, setDinheiro] = useState(0); // saldo em reais do usuário
+  const [dinheiro, setDinheiro] = useState(0);
   const [nomePerfil, setNomePerfil] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [venceu, setVenceu] = useState(false);
@@ -164,13 +164,9 @@ export function GameProvider({ children }) {
         return;
       }
 
-      const jogadorRef = doc(db, "usuarios", usuario.uid);
-      const docSnap = await getDoc(jogadorRef);
-
-      if (docSnap.exists()) {
-        const dados = docSnap.data();
+      const dados = await dbService.carregarProgresso(usuario.uid);
+      if (dados) {
         const p = dados.progresso;
-
         setNomePerfil(dados.nomePerfil || "");
         setBananas(p.bananas || 0);
         setDinheiro(p.dinheiro || 0);
@@ -190,20 +186,17 @@ export function GameProvider({ children }) {
     const usuario = auth.currentUser;
     if (!usuario) return;
 
-    const jogadorRef = doc(db, "usuarios", usuario.uid);
     try {
-      await updateDoc(jogadorRef, {
-        progresso: {
-          bananas,
-          dinheiro,
-          porClique,
-          porSegundo,
-          qtdProducao,
-          powerupsComprados,
-          permanentesComprados,
-        },
+      await dbService.salvarProgresso(usuario.uid, {
+        bananas,
+        dinheiro,
+        porClique,
+        porSegundo,
+        qtdProducao,
+        powerupsComprados,
+        permanentesComprados,
       });
-      console.log("Jogo salvo!");
+      console.log("Jogo salvo via serviço!");
     } catch (error) {
       console.error("Erro ao salvar:", error);
     }
