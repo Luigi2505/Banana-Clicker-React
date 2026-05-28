@@ -65,6 +65,7 @@ export default function App() {
             <Route path="/" element={<Jogar />} />
             <Route path="/loja" element={<Loja />} />
             <Route path="/ranking" element={<Ranking />} />
+            
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
