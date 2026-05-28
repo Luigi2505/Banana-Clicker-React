@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db, auth } from "../firebase";
 
 export const META = 50000;
 
@@ -80,14 +82,13 @@ export const ITENS_POWERUP = [
   },
 ];
 
-// Itens permanentes comprados com dinheiro real (pagamento integrado depois)
 export const ITENS_PERMANENTES = [
   {
     id: "ip1",
     nome: "Salto Temporal — 4h",
     emoji: "⏩",
-    preco: "R$ 2,99",
-    descricao: "Recebe instantaneamente 4h de producao idle acumulada.",
+    preco: 2.99,
+    descricao: "Recebe instantaneamente 4h de producao idle.",
     tipo: "timeskip",
     horas: 4,
   },
@@ -95,8 +96,8 @@ export const ITENS_PERMANENTES = [
     id: "ip2",
     nome: "Salto Temporal — 8h",
     emoji: "⏭",
-    preco: "R$ 4,99",
-    descricao: "Recebe instantaneamente 8h de producao idle acumulada.",
+    preco: 4.99,
+    descricao: "Recebe instantaneamente 8h de producao idle.",
     tipo: "timeskip",
     horas: 8,
   },
@@ -104,8 +105,8 @@ export const ITENS_PERMANENTES = [
     id: "ip3",
     nome: "Salto Temporal — 24h",
     emoji: "🕰",
-    preco: "R$ 9,99",
-    descricao: "Recebe instantaneamente 24h de producao idle acumulada.",
+    preco: 9.99,
+    descricao: "Recebe instantaneamente 24h de producao idle.",
     tipo: "timeskip",
     horas: 24,
   },
@@ -113,7 +114,7 @@ export const ITENS_PERMANENTES = [
     id: "ip4",
     nome: "DNA Mutante",
     emoji: "🧬",
-    preco: "R$ 14,99",
+    preco: 14.99,
     descricao: "Multiplica toda geracao de bananas por 2x para sempre.",
     tipo: "multiplicador",
   },
@@ -121,7 +122,7 @@ export const ITENS_PERMANENTES = [
     id: "ip5",
     nome: "Macaco Ciborgue",
     emoji: "🤖",
-    preco: "R$ 7,99",
+    preco: 7.99,
     descricao: "Clica automaticamente 10x por segundo enquanto jogar.",
     tipo: "autoclicker",
   },
@@ -145,15 +146,86 @@ export function GameProvider({ children }) {
   });
   const [powerupsComprados, setPowerupsComprados] = useState({});
   const [permanentesComprados, setPermanentesComprados] = useState({});
+  const [dinheiro, setDinheiro] = useState(0); // saldo em reais do usuário
+  const [nomePerfil, setNomePerfil] = useState("");
+  const [carregando, setCarregando] = useState(true);
   const [venceu, setVenceu] = useState(false);
   const [cps, setCps] = useState(0);
 
   const cliquesNoSegundo = useRef(0);
-
-  // Multiplicador global ativo se DNA Mutante foi comprado
   const multGlobal = permanentesComprados["ip4"] ? 2 : 1;
 
-  // Produção automática a cada segundo
+  // ── CARREGAR PROGRESSO DO FIREBASE AO INICIAR ──
+  useEffect(() => {
+    const carregarProgresso = async () => {
+      const usuario = auth.currentUser;
+      if (!usuario) {
+        setCarregando(false);
+        return;
+      }
+
+      const jogadorRef = doc(db, "usuarios", usuario.uid);
+      const docSnap = await getDoc(jogadorRef);
+
+      if (docSnap.exists()) {
+        const dados = docSnap.data();
+        const p = dados.progresso;
+
+        setNomePerfil(dados.nomePerfil || "");
+        setBananas(p.bananas || 0);
+        setDinheiro(p.dinheiro || 0);
+        setPorClique(p.porClique || 1);
+        setPorSegundo(p.porSegundo || 0);
+        setQtdProducao(p.qtdProducao || { p1: 0, p2: 0, p3: 0, p4: 0 });
+        setPowerupsComprados(p.powerupsComprados || {});
+        setPermanentesComprados(p.permanentesComprados || {});
+      }
+      setCarregando(false);
+    };
+    carregarProgresso();
+  }, []);
+
+  // ── SALVAR NO FIREBASE (chamado manualmente e pelo auto-save) ──
+  const salvarJogo = async () => {
+    const usuario = auth.currentUser;
+    if (!usuario) return;
+
+    const jogadorRef = doc(db, "usuarios", usuario.uid);
+    try {
+      await updateDoc(jogadorRef, {
+        progresso: {
+          bananas,
+          dinheiro,
+          porClique,
+          porSegundo,
+          qtdProducao,
+          powerupsComprados,
+          permanentesComprados,
+        },
+      });
+      console.log("Jogo salvo!");
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+    }
+  };
+
+  // ── AUTO-SAVE A CADA 30 SEGUNDOS ──
+  useEffect(() => {
+    if (carregando) return;
+    const intervalo = setInterval(salvarJogo, 30000);
+    return () => clearInterval(intervalo);
+  }, [
+    carregando,
+    bananas,
+    dinheiro,
+    porClique,
+    porSegundo,
+    qtdProducao,
+    powerupsComprados,
+    permanentesComprados,
+  ]);
+
+  // ── PRODUÇÃO AUTOMÁTICA ──
   useEffect(() => {
     const intervalo = setInterval(() => {
       const producao = porSegundo * multGlobal;
@@ -168,7 +240,7 @@ export function GameProvider({ children }) {
     return () => clearInterval(intervalo);
   }, [porSegundo, multGlobal]);
 
-  // Autoclicker — 10 cliques/s se Macaco Ciborgue estiver ativo
+  // ── AUTOCLICKER (Macaco Ciborgue) ──
   useEffect(() => {
     if (!permanentesComprados["ip5"]) return;
     const intervalo = setInterval(() => {
@@ -181,7 +253,7 @@ export function GameProvider({ children }) {
     return () => clearInterval(intervalo);
   }, [permanentesComprados, porClique, multGlobal]);
 
-  // Atualiza CPS a cada 200ms
+  // ── CPS ──
   useEffect(() => {
     const intervalo = setInterval(() => {
       setCps(cliquesNoSegundo.current);
@@ -218,21 +290,27 @@ export function GameProvider({ children }) {
     setPowerupsComprados((c) => ({ ...c, [item.id]: true }));
   }
 
-  // Simula compra permanente — futuramente conecta com pagamento real
-  function comprarPermanente(item) {
+  // Compra item permanente com dinheiro real e salva imediatamente no Firebase
+  async function comprarPermanente(item) {
+    if (item.tipo !== "timeskip" && permanentesComprados[item.id]) return;
+    if (dinheiro < item.preco) return;
+
+    // Debita o dinheiro
+    const novoDinheiro = Math.round((dinheiro - item.preco) * 100) / 100;
+    setDinheiro(novoDinheiro);
+
     if (item.tipo === "timeskip") {
-      // Timeskip pode ser comprado várias vezes
-      const ganho = porSegundo * item.horas * 3600;
       setBananas((b) => {
-        const novo = b + ganho;
+        const novo = b + porSegundo * item.horas * 3600;
         if (novo >= META) setVenceu(true);
         return novo;
       });
-      return;
+    } else {
+      setPermanentesComprados((c) => ({ ...c, [item.id]: true }));
     }
-    // Multiplicador e autoclicker são compra única
-    if (permanentesComprados[item.id]) return;
-    setPermanentesComprados((c) => ({ ...c, [item.id]: true }));
+
+    // Salva imediatamente após a compra
+    await salvarJogo();
   }
 
   function reiniciar() {
@@ -245,6 +323,7 @@ export function GameProvider({ children }) {
     setVenceu(false);
     setCps(0);
     cliquesNoSegundo.current = 0;
+    // Não reseta dinheiro — saldo real não volta ao reiniciar
   }
 
   const valor = {
@@ -252,16 +331,20 @@ export function GameProvider({ children }) {
     porClique,
     porSegundo,
     qtdProducao,
+    dinheiro,
+    nomePerfil,
     powerupsComprados,
     permanentesComprados,
     venceu,
     cps,
     multGlobal,
+    carregando,
     clicarMacaco,
     precoProducao,
     comprarProducao,
     comprarPowerUp,
     comprarPermanente,
+    salvarJogo,
     reiniciar,
   };
 

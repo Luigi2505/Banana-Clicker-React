@@ -12,6 +12,7 @@ export default function Loja() {
 
   const {
     bananas,
+    dinheiro,
     qtdProducao,
     powerupsComprados,
     permanentesComprados,
@@ -37,7 +38,6 @@ export default function Loja() {
     <div style={styles.pagina}>
       <h2 style={styles.titulo}>🛒 Loja</h2>
 
-      {/* 3 abas */}
       <div style={styles.abas}>
         <button style={abaStyle("producao")} onClick={() => setAba("producao")}>
           🏭 Producao
@@ -60,7 +60,7 @@ export default function Loja() {
           return (
             <ItemLoja
               key={item.id}
-              emoji={item.imagem ? undefined : item.emoji}
+              emoji={item.emoji}
               nome={item.nome}
               descricao={`🍌 ${preco} | +${item.bananasSegundo}/s`}
               badge={`x${qtdProducao[item.id]}`}
@@ -92,23 +92,26 @@ export default function Loja() {
       {/* Aba: Itens Permanentes */}
       {aba === "permanente" && (
         <div>
-          {/* Aviso de que o pagamento será integrado depois */}
-          <div style={styles.aviso}>
-            💳 Pagamento com dinheiro real será integrado em breve. Por
-            enquanto, clique para simular a compra.
+          <div style={styles.saldoBox}>
+            💰 Seu saldo: <strong>R$ {dinheiro.toFixed(2)}</strong>
+            <span style={styles.aviso}>
+              {" "}
+              — Pagamento real será integrado em breve
+            </span>
           </div>
 
           {ITENS_PERMANENTES.map((item) => {
             const jaComprou =
               item.tipo !== "timeskip" && permanentesComprados[item.id];
+            const podePagar = dinheiro >= item.preco;
             return (
               <ItemLoja
                 key={item.id}
                 emoji={item.emoji}
                 nome={item.nome}
-                descricao={`${item.preco} — ${item.descricao}`}
+                descricao={`R$ ${item.preco.toFixed(2)} — ${item.descricao}`}
                 badge={jaComprou ? "✓" : item.tipo === "timeskip" ? "+" : "—"}
-                podePagar={true}
+                podePagar={podePagar}
                 jaComprou={jaComprou}
                 onComprar={() => comprarPermanente(item)}
               />
@@ -129,12 +132,12 @@ const styles = {
     paddingBottom: 8,
   },
   abas: { display: "flex", gap: 4, marginBottom: 16 },
-  aviso: {
-    background: "#fff8e1",
-    border: "1px solid #f9a825",
+  saldoBox: {
+    background: "#f5f5f5",
+    border: "1px solid #ddd",
     padding: "8px 12px",
-    fontSize: 12,
+    fontSize: 13,
     marginBottom: 12,
-    lineHeight: 1.5,
   },
+  aviso: { fontSize: 11, color: "#888" },
 };
