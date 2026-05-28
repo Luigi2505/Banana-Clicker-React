@@ -4,12 +4,13 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_DOMINIO.firebaseapp.com",
-  projectId: "SEU_PROJECT_ID",
-  storageBucket: "SEU_BUCKET.appspot.com",
-  messagingSenderId: "SEU_SENDER_ID",
-  appId: "SEU_APP_ID",
+    apiKey: "AIzaSyDm_9geSp7VcmrxGh9AZgYRHQna7TocXPg",
+    authDomain: "bananaclickerreact.firebaseapp.com",
+    projectId: "bananaclickerreact",
+    storageBucket: "bananaclickerreact.firebasestorage.app",
+    messagingSenderId: "328559339493",
+    appId: "1:328559339493:web:da57132def6a1a23da710c",
+    measurementId: "G-X18TWRRVLB"
 };
 
 const app = initializeApp(firebaseConfig);
