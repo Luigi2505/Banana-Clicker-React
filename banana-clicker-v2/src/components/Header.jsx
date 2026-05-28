@@ -1,10 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase";
 import { useGame } from "../context/GameContext";
 
-// Componente de cabeçalho com navegação entre as páginas
 export default function Header() {
-  const { bananas } = useGame();
-  const location = useLocation(); // para saber qual página está ativa
+  const { bananas, dinheiro, nomePerfil, salvarJogo } = useGame();
+  const location = useLocation();
+
+  async function sair() {
+    await salvarJogo(); // Salva antes de sair
+    await signOut(auth);
+  }
 
   const linkStyle = (path) => ({
     textDecoration: "none",
@@ -18,15 +24,27 @@ export default function Header() {
 
   return (
     <header style={styles.header}>
-      <span style={styles.logo}>🍌 Banana Clicker</span>
+      <span style={styles.logo}>🍌 {nomePerfil || "Banana Clicker"}</span>
 
       <nav style={styles.nav}>
-        <Link to="/"         style={linkStyle("/")}>🐵 Jogar</Link>
-        <Link to="/loja"     style={linkStyle("/loja")}>🛒 Loja</Link>
-        <Link to="/ranking"  style={linkStyle("/ranking")}>🏆 Ranking</Link>
+        <Link to="/" style={linkStyle("/")}>
+          🐵 Jogar
+        </Link>
+        <Link to="/loja" style={linkStyle("/loja")}>
+          🛒 Loja
+        </Link>
+        <Link to="/ranking" style={linkStyle("/ranking")}>
+          🏆 Ranking
+        </Link>
       </nav>
 
-      <span style={styles.contador}>🍌 {Math.floor(bananas)}</span>
+      <div style={styles.direita}>
+        <span style={styles.saldo}>🍌 {Math.floor(bananas)}</span>
+        <span style={styles.dinheiro}>💰 R$ {dinheiro.toFixed(2)}</span>
+        <button style={styles.sairBtn} onClick={sair}>
+          Sair
+        </button>
+      </div>
     </header>
   );
 }
@@ -42,7 +60,17 @@ const styles = {
     flexWrap: "wrap",
     gap: 8,
   },
-  logo: { fontWeight: "bold", fontSize: 18 },
-  nav:  { display: "flex", gap: 8 },
-  contador: { fontWeight: "bold", fontSize: 16 },
+  logo: { fontWeight: "bold", fontSize: 16 },
+  nav: { display: "flex", gap: 8 },
+  direita: { display: "flex", alignItems: "center", gap: 12 },
+  saldo: { fontWeight: "bold", fontSize: 15 },
+  dinheiro: { fontSize: 13, color: "#555" },
+  sairBtn: {
+    padding: "4px 12px",
+    background: "transparent",
+    border: "1px solid #aaa",
+    fontFamily: "monospace",
+    fontSize: 12,
+    cursor: "pointer",
+  },
 };

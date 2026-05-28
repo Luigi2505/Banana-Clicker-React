@@ -10,6 +10,8 @@ import Footer from "./components/Footer";
 import Jogar from "./pages/Jogar";
 import Loja from "./pages/Loja";
 import Ranking from "./pages/Ranking";
+import Login from "./pages/Login";
+import Cadastro from "./pages/Cadastro";
 
 // Telas de Autenticação
 import Cadastro from "./components/Cadastro";
@@ -65,9 +67,9 @@ export default function App() {
             <Route path="/"        element={<Jogar />} />
             <Route path="/loja"    element={<Loja />} />
             <Route path="/ranking" element={<Ranking />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
-
         <Footer />
       </div>
     </GameProvider>
