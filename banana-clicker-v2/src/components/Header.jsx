@@ -1,7 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { signOut } from "firebase/auth";
-import { auth } from "../firebase";
 import { useGame } from "../context/GameContext";
+import { authService } from "../services/auth.service";
 
 export default function Header() {
   const { bananas, dinheiro, nomePerfil, salvarJogo } = useGame();
@@ -9,9 +8,6 @@ export default function Header() {
 
   async function sair() {
     console.log("Iniciando processo de logout...");
-
-    // Dispara o salvamento de forma assíncrona. Se travar, o catch captura e a vida segue.
-    // NUNCA dê await nisso durante um logout.
     salvarJogo().catch((e) =>
       console.warn("Falha ao salvar no banco antes de sair:", e),
     );
