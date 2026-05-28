@@ -1,24 +1,48 @@
+import { useState, useEffect } from "react";
 import { useGame } from "../context/GameContext";
 import { ITENS_POWERUP, META } from "../context/GameContext";
-
-const RANKING_SIMULADO = [
-  { nome: "Macaco Mestre",   bananas: 99999 },
-  { nome: "BananaLord",      bananas: 45200 },
-  { nome: "Rei dos Macacos", bananas: 12800 },
-  { nome: "ClicadorPro",     bananas: 8750  },
-  { nome: "Você",            bananas: null  },
-];
+import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
 
 export default function Ranking() {
-  const { bananas, porClique, porSegundo, qtdProducao, powerupsComprados } = useGame();
+  const { bananas, porClique, porSegundo, qtdProducao, powerupsComprados, nomePerfil } = useGame();
+  
+  // Estados para gerenciar a API
+  const [ranking, setRanking] = useState([]);
+  const [carregando, setCarregando] = useState(true);
 
+  // Lógica das Suas Estatísticas (Mantida intacta)
   const totalPowerups = Object.keys(powerupsComprados).length;
   const totalProducao = Object.values(qtdProducao).reduce((a, b) => a + b, 0);
   const progresso     = Math.min(((bananas / META) * 100), 100).toFixed(1);
 
-  const ranking = RANKING_SIMULADO
-    .map((r) => ({ ...r, bananas: r.bananas ?? Math.floor(bananas) }))
-    .sort((a, b) => b.bananas - a.bananas);
+  // Consumo da API do Firebase para o Placar Geral
+  useEffect(() => {
+    const buscarRanking = async () => {
+      try {
+        const usuariosRef = collection(db, "usuarios");
+        const q = query(usuariosRef, orderBy("progresso.bananas", "desc"), limit(10));
+        const querySnapshot = await getDocs(q);
+
+        const listaRankeada = querySnapshot.docs.map((doc) => {
+          const dados = doc.data();
+          return {
+            id: doc.id,
+            nome: dados.nomePerfil || "Anônimo",
+            bananas: dados.progresso?.bananas || 0
+          };
+        });
+
+        setRanking(listaRankeada);
+      } catch (error) {
+        console.error("Erro ao buscar ranking:", error);
+      } finally {
+        setCarregando(false);
+      }
+    };
+
+    buscarRanking();
+  }, []);
 
   return (
     <div style={styles.pagina}>
@@ -49,13 +73,20 @@ export default function Ranking() {
             </tr>
           </thead>
           <tbody>
-            {ranking.map((r, i) => (
-              <tr key={r.nome} style={{ background: r.nome === "Você" ? "#fffde7" : "transparent" }}>
-                <td style={styles.td}>{i + 1}º</td>
-                <td style={styles.td}>{r.nome === "Você" ? `👤 ${r.nome}` : r.nome}</td>
-                <td style={styles.tdNum}>🍌 {r.bananas.toLocaleString()}</td>
+            {carregando ? (
+              <tr>
+                <td colSpan="3" style={{ textAlign: "center", padding: "15px" }}>Carregando dados...</td>
               </tr>
-            ))}
+            ) : (
+              ranking.map((r, i) => (
+                // Destaca a linha se o nome do jogador no banco for igual ao nome do perfil logado
+                <tr key={r.id} style={{ background: r.nome === nomePerfil ? "#fffde7" : "transparent" }}>
+                  <td style={styles.td}>{i + 1}º</td>
+                  <td style={styles.td}>{r.nome === nomePerfil ? `👤 ${r.nome}` : r.nome}</td>
+                  <td style={styles.tdNum}>🍌 {Math.floor(r.bananas).toLocaleString()}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
