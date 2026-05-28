@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase";
 import { Link } from "react-router-dom";
+import { authService } from "../services/auth.service";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -14,7 +13,7 @@ export default function Login() {
     setErro("");
     setCarregando(true);
     try {
-      await signInWithEmailAndPassword(auth, email, senha);
+      await authService.login(email, senha);
       // App.jsx detecta o login automaticamente via onAuthStateChanged
     } catch (error) {
       if (

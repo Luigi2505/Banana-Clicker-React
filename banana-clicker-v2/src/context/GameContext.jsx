@@ -1,30 +1,131 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { db, auth } from "../firebase";
+import { auth } from "../firebase";
+import { dbService } from "../services/db.service";
 
 export const META = 50000;
 
 export const ITENS_PRODUCAO = [
-  { id: "p1", nome: "Macaquinho Ajudante", imagem: "/images/macaco.png", preco: 10, bananasSegundo: 1, canto: "superior-esquerdo" },
-  { id: "p2", nome: "Bananal", imagem: "/images/bananeira.png", preco: 50, bananasSegundo: 5, canto: "inferior-esquerdo" },
-  { id: "p3", nome: "Fazenda de Macacos", imagem: "/images/fazenda.png", preco: 200, bananasSegundo: 20, canto: "superior-direito" },
-  { id: "p4", nome: "Fabrica de Banana", imagem: "/images/fabrica.png", preco: 500, bananasSegundo: 50, canto: "inferior-direito" },
+  {
+    id: "p1",
+    nome: "Macaquinho Ajudante",
+    imagem: "/images/macaco.png",
+    preco: 10,
+    bananasSegundo: 1,
+    canto: "superior-esquerdo",
+  },
+  {
+    id: "p2",
+    nome: "Bananal",
+    imagem: "/images/bananeira.png",
+    preco: 50,
+    bananasSegundo: 5,
+    canto: "inferior-esquerdo",
+  },
+  {
+    id: "p3",
+    nome: "Fazenda de Macacos",
+    imagem: "/images/fazenda.png",
+    preco: 200,
+    bananasSegundo: 20,
+    canto: "superior-direito",
+  },
+  {
+    id: "p4",
+    nome: "Fabrica de Banana",
+    imagem: "/images/fabrica.png",
+    preco: 500,
+    bananasSegundo: 50,
+    canto: "inferior-direito",
+  },
 ];
 
 export const ITENS_POWERUP = [
-  { id: "u1", nome: "Luvas de Clique", emoji: "🧤", preco: 30, multiplicador: 1.2, descricao: "Suas maos ficam mais rapidas. Clique vale x1.2!" },
-  { id: "u2", nome: "Dedos Turbo", emoji: "⚡", preco: 150, multiplicador: 1.5, descricao: "Velocidade pura nos dedos. Clique vale x1.5!" },
-  { id: "u3", nome: "Mao Magica", emoji: "🪄", preco: 400, multiplicador: 2.0, descricao: "Magia bananeira! Clique vale x2.0!" },
-  { id: "u4", nome: "Braco Robotico", emoji: "🦾", preco: 1000, multiplicador: 3.0, descricao: "Tecnologia de ponta. Clique vale x3.0!" },
-  { id: "u5", nome: "Poder do Macaco Rei", emoji: "👑", preco: 3000, multiplicador: 5.0, descricao: "O poder supremo dos macacos. Clique vale x5.0!" },
+  {
+    id: "u1",
+    nome: "Luvas de Clique",
+    emoji: "🧤",
+    preco: 30,
+    multiplicador: 1.2,
+    descricao: "Suas maos ficam mais rapidas. Clique vale x1.2!",
+  },
+  {
+    id: "u2",
+    nome: "Dedos Turbo",
+    emoji: "⚡",
+    preco: 150,
+    multiplicador: 1.5,
+    descricao: "Velocidade pura nos dedos. Clique vale x1.5!",
+  },
+  {
+    id: "u3",
+    nome: "Mao Magica",
+    emoji: "🪄",
+    preco: 400,
+    multiplicador: 2.0,
+    descricao: "Magia bananeira! Clique vale x2.0!",
+  },
+  {
+    id: "u4",
+    nome: "Braco Robotico",
+    emoji: "🦾",
+    preco: 1000,
+    multiplicador: 3.0,
+    descricao: "Tecnologia de ponta. Clique vale x3.0!",
+  },
+  {
+    id: "u5",
+    nome: "Poder do Macaco Rei",
+    emoji: "👑",
+    preco: 3000,
+    multiplicador: 5.0,
+    descricao: "O poder supremo dos macacos. Clique vale x5.0!",
+  },
 ];
 
 export const ITENS_PERMANENTES = [
-  { id: "ip1", nome: "Salto Temporal — 4h", emoji: "⏩", preco: 2.99, descricao: "Recebe instantaneamente 4h de producao idle.", tipo: "timeskip", horas: 4 },
-  { id: "ip2", nome: "Salto Temporal — 8h", emoji: "⏭", preco: 4.99, descricao: "Recebe instantaneamente 8h de producao idle.", tipo: "timeskip", horas: 8 },
-  { id: "ip3", nome: "Salto Temporal — 24h", emoji: "🕰", preco: 9.99, descricao: "Recebe instantaneamente 24h de producao idle.", tipo: "timeskip", horas: 24 },
-  { id: "ip4", nome: "DNA Mutante", emoji: "🧬", preco: 14.99, descricao: "Multiplica toda geracao de bananas por 2x para sempre.", tipo: "multiplicador" },
-  { id: "ip5", nome: "Macaco Ciborgue", emoji: "🤖", preco: 7.99, descricao: "Clica automaticamente 10x por segundo enquanto jogar.", tipo: "autoclicker" },
+  {
+    id: "ip1",
+    nome: "Salto Temporal — 4h",
+    emoji: "⏩",
+    preco: 2.99,
+    descricao: "Recebe instantaneamente 4h de producao idle.",
+    tipo: "timeskip",
+    horas: 4,
+  },
+  {
+    id: "ip2",
+    nome: "Salto Temporal — 8h",
+    emoji: "⏭",
+    preco: 4.99,
+    descricao: "Recebe instantaneamente 8h de producao idle.",
+    tipo: "timeskip",
+    horas: 8,
+  },
+  {
+    id: "ip3",
+    nome: "Salto Temporal — 24h",
+    emoji: "🕰",
+    preco: 9.99,
+    descricao: "Recebe instantaneamente 24h de producao idle.",
+    tipo: "timeskip",
+    horas: 24,
+  },
+  {
+    id: "ip4",
+    nome: "DNA Mutante",
+    emoji: "🧬",
+    preco: 14.99,
+    descricao: "Multiplica toda geracao de bananas por 2x para sempre.",
+    tipo: "multiplicador",
+  },
+  {
+    id: "ip5",
+    nome: "Macaco Ciborgue",
+    emoji: "🤖",
+    preco: 7.99,
+    descricao: "Clica automaticamente 10x por segundo enquanto jogar.",
+    tipo: "autoclicker",
+  },
 ];
 
 const GameContext = createContext();
@@ -37,27 +138,22 @@ export function GameProvider({ children }) {
   const [bananas, setBananas] = useState(0);
   const [porClique, setPorClique] = useState(1);
   const [porSegundo, setPorSegundo] = useState(0);
-  const [qtdProducao, setQtdProducao] = useState({ p1: 0, p2: 0, p3: 0, p4: 0 });
+  const [qtdProducao, setQtdProducao] = useState({
+    p1: 0,
+    p2: 0,
+    p3: 0,
+    p4: 0,
+  });
   const [powerupsComprados, setPowerupsComprados] = useState({});
   const [permanentesComprados, setPermanentesComprados] = useState({});
-  const [dinheiro, setDinheiro] = useState(0); 
+  const [dinheiro, setDinheiro] = useState(0);
   const [nomePerfil, setNomePerfil] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [venceu, setVenceu] = useState(false);
   const [cps, setCps] = useState(0);
 
   const cliquesNoSegundo = useRef(0);
-  // REF para manter a foto atual do jogo sem quebrar o Auto-Save
-  const estadoAtual = useRef({}); 
-
   const multGlobal = permanentesComprados["ip4"] ? 2 : 1;
-
-  // Atualiza a "foto" sempre que houver mudança
-  useEffect(() => {
-    estadoAtual.current = {
-      bananas, dinheiro, porClique, porSegundo, qtdProducao, powerupsComprados, permanentesComprados
-    };
-  }, [bananas, dinheiro, porClique, porSegundo, qtdProducao, powerupsComprados, permanentesComprados]);
 
   // ── CARREGAR PROGRESSO DO FIREBASE AO INICIAR ──
   useEffect(() => {
@@ -68,13 +164,9 @@ export function GameProvider({ children }) {
         return;
       }
 
-      const jogadorRef = doc(db, "usuarios", usuario.uid);
-      const docSnap = await getDoc(jogadorRef);
-
-      if (docSnap.exists()) {
-        const dados = docSnap.data();
-        const p = dados.progresso || {};
-
+      const dados = await dbService.carregarProgresso(usuario.uid);
+      if (dados) {
+        const p = dados.progresso;
         setNomePerfil(dados.nomePerfil || "");
         setBananas(p.bananas || 0);
         setDinheiro(p.dinheiro || 0);
@@ -89,18 +181,22 @@ export function GameProvider({ children }) {
     carregarProgresso();
   }, []);
 
-  // ── SALVAR NO FIREBASE (Manualmente ou via Auto-Save) ──
-  // Recebe 'dadosForcados' para quando a loja precisa salvar o dinheiro imediato
-  const salvarJogo = async (dadosForcados = null) => {
+  // ── SALVAR NO FIREBASE (chamado manualmente e pelo auto-save) ──
+  const salvarJogo = async () => {
     const usuario = auth.currentUser;
     if (!usuario) return;
 
-    const jogadorRef = doc(db, "usuarios", usuario.uid);
     try {
-      await updateDoc(jogadorRef, {
-        progresso: dadosForcados || estadoAtual.current,
+      await dbService.salvarProgresso(usuario.uid, {
+        bananas,
+        dinheiro,
+        porClique,
+        porSegundo,
+        qtdProducao,
+        powerupsComprados,
+        permanentesComprados,
       });
-      console.log("Jogo salvo no Firebase!");
+      console.log("Jogo salvo via serviço!");
     } catch (error) {
       console.error("Erro ao salvar:", error);
     }
@@ -109,15 +205,21 @@ export function GameProvider({ children }) {
   // ── AUTO-SAVE A CADA 30 SEGUNDOS ──
   useEffect(() => {
     if (carregando) return;
-    const intervalo = setInterval(() => {
-      salvarJogo(); // Usa a foto atualizada do estadoAtual.current!
-    }, 30000);
+    const intervalo = setInterval(salvarJogo, 30000);
     return () => clearInterval(intervalo);
-  }, [carregando]);
+  }, [
+    carregando,
+    bananas,
+    dinheiro,
+    porClique,
+    porSegundo,
+    qtdProducao,
+    powerupsComprados,
+    permanentesComprados,
+  ]);
 
   // ── PRODUÇÃO AUTOMÁTICA ──
   useEffect(() => {
-    if (carregando) return;
     const intervalo = setInterval(() => {
       const producao = porSegundo * multGlobal;
       if (producao > 0) {
@@ -129,11 +231,11 @@ export function GameProvider({ children }) {
       }
     }, 1000);
     return () => clearInterval(intervalo);
-  }, [porSegundo, multGlobal, carregando]);
+  }, [porSegundo, multGlobal]);
 
   // ── AUTOCLICKER (Macaco Ciborgue) ──
   useEffect(() => {
-    if (carregando || !permanentesComprados["ip5"]) return;
+    if (!permanentesComprados["ip5"]) return;
     const intervalo = setInterval(() => {
       setBananas((b) => {
         const novo = b + porClique * multGlobal * 10;
@@ -142,7 +244,7 @@ export function GameProvider({ children }) {
       });
     }, 1000);
     return () => clearInterval(intervalo);
-  }, [permanentesComprados, porClique, multGlobal, carregando]);
+  }, [permanentesComprados, porClique, multGlobal]);
 
   // ── CPS ──
   useEffect(() => {
@@ -181,35 +283,27 @@ export function GameProvider({ children }) {
     setPowerupsComprados((c) => ({ ...c, [item.id]: true }));
   }
 
-  // ── COMPRAR PERMANENTE (Corrigido para salvar no banco imediato e corretamente) ──
+  // Compra item permanente com dinheiro real e salva imediatamente no Firebase
   async function comprarPermanente(item) {
     if (item.tipo !== "timeskip" && permanentesComprados[item.id]) return;
     if (dinheiro < item.preco) return;
 
-    // Calcula os novos valores localmente primeiro
+    // Debita o dinheiro
     const novoDinheiro = Math.round((dinheiro - item.preco) * 100) / 100;
-    let novasBananas = bananas;
-    let novasCompras = { ...permanentesComprados };
-
-    // Aplica na tela
     setDinheiro(novoDinheiro);
 
     if (item.tipo === "timeskip") {
-      novasBananas = bananas + (porSegundo * item.horas * 3600);
-      setBananas(novasBananas);
-      if (novasBananas >= META) setVenceu(true);
+      setBananas((b) => {
+        const novo = b + porSegundo * item.horas * 3600;
+        if (novo >= META) setVenceu(true);
+        return novo;
+      });
     } else {
-      novasCompras[item.id] = true;
-      setPermanentesComprados(novasCompras);
+      setPermanentesComprados((c) => ({ ...c, [item.id]: true }));
     }
 
-    // Força o salvamento com os valores novos ignorando o atraso do React!
-    await salvarJogo({
-      ...estadoAtual.current,
-      dinheiro: novoDinheiro,
-      bananas: novasBananas,
-      permanentesComprados: novasCompras
-    });
+    // Salva imediatamente após a compra
+    await salvarJogo();
   }
 
   function reiniciar() {
@@ -222,17 +316,30 @@ export function GameProvider({ children }) {
     setVenceu(false);
     setCps(0);
     cliquesNoSegundo.current = 0;
+    // Não reseta dinheiro — saldo real não volta ao reiniciar
   }
 
   const valor = {
-    bananas, porClique, porSegundo, qtdProducao, dinheiro, nomePerfil, powerupsComprados,
-    permanentesComprados, venceu, cps, multGlobal, carregando, clicarMacaco, precoProducao,
-    comprarProducao, comprarPowerUp, comprarPermanente, salvarJogo, reiniciar,
+    bananas,
+    porClique,
+    porSegundo,
+    qtdProducao,
+    dinheiro,
+    nomePerfil,
+    powerupsComprados,
+    permanentesComprados,
+    venceu,
+    cps,
+    multGlobal,
+    carregando,
+    clicarMacaco,
+    precoProducao,
+    comprarProducao,
+    comprarPowerUp,
+    comprarPermanente,
+    salvarJogo,
+    reiniciar,
   };
-
-  if (carregando) {
-    return <div style={{ textAlign: 'center', marginTop: '50px' }}>🍌 Carregando fazenda...</div>;
-  }
 
   return <GameContext.Provider value={valor}>{children}</GameContext.Provider>;
 }
