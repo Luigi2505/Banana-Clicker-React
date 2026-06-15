@@ -4,16 +4,17 @@
   padding: 0;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   font-family: monospace;
   background: #f5f5f5;
   color: #222;
-}
-
-html,
-body {
   overflow: hidden;
-  height: 100%;
 }
 
 button {
@@ -21,18 +22,6 @@ button {
   cursor: pointer;
 }
 
-#root {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.macaco-clicker {
-  width: 150px; /* Altere este valor para o tamanho que quiser (ex: 150px, 400px) */
-  height: auto; /* Mantém a proporção da imagem sem distorcer */
-}
-
-/* Animação dos números flutuantes ao clicar no macaco */
 @keyframes subir {
   0% {
     opacity: 1;
@@ -44,7 +33,6 @@ button {
   }
 }
 
-/* Animação de balanço dos emojis nos cantos */
 @keyframes balanco {
   0% {
     transform: rotate(-4deg);

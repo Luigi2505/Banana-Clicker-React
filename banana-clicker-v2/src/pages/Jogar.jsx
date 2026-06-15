@@ -6,8 +6,15 @@ import InventarioPowerups from "../components/InventarioPowerups";
 import TelaVitoria from "../components/TelaVitoria";
 
 export default function Jogar() {
-  const { bananas, porClique, porSegundo, qtdProducao, venceu, cps } =
-    useGame();
+  const {
+    bananas,
+    porClique,
+    porSegundo,
+    qtdProducao,
+    venceu,
+    cps,
+    climaInfo,
+  } = useGame();
 
   const progresso = Math.min((bananas / META) * 100, 100);
 
@@ -31,6 +38,9 @@ export default function Jogar() {
             +{porClique} por clique &nbsp;|&nbsp; +{porSegundo}/s
           </p>
           <p style={styles.info}>CPS: {cps}</p>
+          <p style={styles.info}>
+            🌤 {climaInfo.cidade}: {climaInfo.condicao}
+          </p>
         </div>
 
         <Macaco />
@@ -59,7 +69,8 @@ export default function Jogar() {
 const styles = {
   pagina: {
     position: "relative",
-    height: "calc(100vh - 60px)",
+    height: "100%",
+    width: "100%",
     backgroundImage: "url('/images/fundo.png')",
     backgroundSize: "cover",
     backgroundPosition: "center",
@@ -75,30 +86,49 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     zIndex: 5,
+    width: "100%",
+    padding: "0 8px",
+    boxSizing: "border-box",
   },
   contador: {
     background: "rgba(255,255,255,0.92)",
     border: "2px solid #222",
-    padding: "10px 32px",
+    padding: "clamp(6px, 1.5vh, 10px) clamp(6px, 2vw, 32px)",
     textAlign: "center",
     marginBottom: 8,
+    width: "min(60vw, 380px)",
+    boxSizing: "border-box",
   },
-  qtd: { fontSize: 32, fontWeight: "bold", margin: 0 },
-  info: { fontSize: 13, margin: "4px 0 0", color: "#555" },
+  qtd: {
+    fontSize: "clamp(18px, 5vw, 32px)",
+    fontWeight: "bold",
+    margin: 0,
+    whiteSpace: "nowrap",
+  },
+  info: {
+    fontSize: "clamp(9px, 1.8vw, 13px)",
+    margin: "4px 0 0",
+    color: "#555",
+    overflowWrap: "break-word",
+    wordBreak: "break-word",
+  },
+
   barraArea: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    padding: "6px 16px 8px",
+    padding: "6px clamp(8px, 2vw, 16px) 8px",
     background: "rgba(255,255,255,0.92)",
     borderTop: "2px solid #222",
     zIndex: 10,
   },
   barraLabel: {
     display: "flex",
+    flexWrap: "wrap",
     justifyContent: "space-between",
-    fontSize: 12,
+    gap: 4,
+    fontSize: "clamp(10px, 2vw, 12px)",
     marginBottom: 4,
     fontFamily: "monospace",
   },

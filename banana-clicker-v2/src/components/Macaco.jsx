@@ -1,12 +1,10 @@
 import { useState, useEffect } from "react";
 import { useGame } from "../context/GameContext";
 
-// Componente do macaco clicável com números flutuantes
 export default function Macaco() {
   const { clicarMacaco, porClique } = useGame();
   const [flutuantes, setFlutuantes] = useState([]);
 
-  // Remove números flutuantes após a animação terminar
   useEffect(() => {
     if (flutuantes.length === 0) return;
     const t = setTimeout(() => setFlutuantes((f) => f.slice(1)), 900);
@@ -20,16 +18,8 @@ export default function Macaco() {
 
   return (
     <div style={styles.area}>
-      <button
-        style={styles.btn}
-        onClick={handleClick}
-        className="clicker-container"
-      >
-        <img
-          src="public/images/macaco-clicker.png"
-          alt="Macaco Clicker"
-          className="macaco-clicker"
-        />
+      <button style={styles.btn} onClick={handleClick}>
+        <img src="/images/macaco-clicker.png" style={styles.imagem} />
       </button>
 
       {flutuantes.map((id) => (
@@ -46,23 +36,29 @@ const styles = {
     position: "relative",
     display: "flex",
     justifyContent: "center",
-    margin: "24px 0",
+    margin: "clamp(8px, 2vh, 24px) 0",
   },
   btn: {
-    fontSize: 90,
     background: "none",
     border: "none",
     cursor: "pointer",
     userSelect: "none",
     lineHeight: 1,
+    padding: 0,
+  },
+  imagem: {
+    width: "clamp(80px, 18vw, 160px)",
+    height: "auto",
+    display: "block",
   },
   flutuante: {
     position: "absolute",
     top: -10,
     left: "50%",
-    fontSize: 16,
+    fontSize: "clamp(12px, 2.5vw, 16px)",
     fontWeight: "bold",
     pointerEvents: "none",
     animation: "subir 0.9s ease-out forwards",
+    whiteSpace: "nowrap",
   },
 };

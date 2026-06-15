@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { auth } from "../firebase";
 import { dbService } from "../services/db.service";
+import { apiService } from "../services/api.service";
 
 export const META = 50000;
 
@@ -135,6 +136,7 @@ export function useGame() {
 }
 
 export function GameProvider({ children }) {
+  const [fotoPerfil, setFotoPerfil] = useState(null);
   const [bananas, setBananas] = useState(0);
   const [porClique, setPorClique] = useState(1);
   const [porSegundo, setPorSegundo] = useState(0);
@@ -152,8 +154,17 @@ export function GameProvider({ children }) {
   const [venceu, setVenceu] = useState(false);
   const [cps, setCps] = useState(0);
 
+  // Clima — precisa ser declarado ANTES do multGlobal usar
+  const [climaMult, setClimaMult] = useState(1);
+  const [climaInfo, setClimaInfo] = useState({
+    cidade: "Carregando...",
+    condicao: "",
+  });
+
   const cliquesNoSegundo = useRef(0);
-  const multGlobal = permanentesComprados["ip4"] ? 2 : 1;
+
+  // multGlobal pode usar climaMult com seguranca pois ja foi declarado acima
+  const multGlobal = (permanentesComprados["ip4"] ? 2 : 1) * climaMult;
 
   // ── CARREGAR PROGRESSO DO FIREBASE AO INICIAR ──
   useEffect(() => {
@@ -164,28 +175,38 @@ export function GameProvider({ children }) {
         return;
       }
 
-      const dados = await dbService.carregarProgresso(usuario.uid);
-      if (dados) {
-        const p = dados.progresso;
-        setNomePerfil(dados.nomePerfil || "");
-        setBananas(p.bananas || 0);
-        setDinheiro(p.dinheiro || 0);
-        setPorClique(p.porClique || 1);
-        setPorSegundo(p.porSegundo || 0);
-        setQtdProducao(p.qtdProducao || { p1: 0, p2: 0, p3: 0, p4: 0 });
-        setPowerupsComprados(p.powerupsComprados || {});
-        setPermanentesComprados(p.permanentesComprados || {});
+      try {
+        const dados = await dbService.carregarProgresso(usuario.uid);
+        if (dados && dados.progresso) {
+          const p = dados.progresso;
+          setFotoPerfil(dados.fotoPerfil || null);
+          setNomePerfil(dados.nomePerfil || "");
+          setBananas(p.bananas || 0);
+          setDinheiro(p.dinheiro || 0);
+          setPorClique(p.porClique || 1);
+          setPorSegundo(p.porSegundo || 0);
+          setQtdProducao(p.qtdProducao || { p1: 0, p2: 0, p3: 0, p4: 0 });
+          setPowerupsComprados(p.powerupsComprados || {});
+          setPermanentesComprados(p.permanentesComprados || {});
+        }
+      } catch (error) {
+        console.error(
+          "Falha ao ler o Firestore. Iniciando com dados zerados:",
+          error,
+        );
+      } finally {
+        // Isso garante que o jogo DESTRAVE mesmo se o Firebase explodir
+        setCarregando(false);
       }
-      setCarregando(false);
     };
+
     carregarProgresso();
   }, []);
 
-  // ── SALVAR NO FIREBASE (chamado manualmente e pelo auto-save) ──
+  // ── SALVAR NO FIREBASE ──
   const salvarJogo = async () => {
     const usuario = auth.currentUser;
     if (!usuario) return;
-
     try {
       await dbService.salvarProgresso(usuario.uid, {
         bananas,
@@ -196,11 +217,18 @@ export function GameProvider({ children }) {
         powerupsComprados,
         permanentesComprados,
       });
-      console.log("Jogo salvo via serviço!");
     } catch (error) {
       console.error("Erro ao salvar:", error);
     }
   };
+
+  // Salva a foto de perfil (base64) no Firestore
+  async function salvarFotoPerfil(base64) {
+    const usuario = auth.currentUser;
+    if (!usuario) return;
+    await dbService.salvarFotoPerfil(usuario.uid, base64);
+    setFotoPerfil(base64);
+  }
 
   // ── AUTO-SAVE A CADA 30 SEGUNDOS ──
   useEffect(() => {
@@ -255,6 +283,85 @@ export function GameProvider({ children }) {
     return () => clearInterval(intervalo);
   }, []);
 
+  // ── CLIMA ──
+  // Calcula o multiplicador e a descricao com base no codigo WMO retornado pela API
+  // Tabela de codigos: https://open-meteo.com/en/docs (campo weathercode)
+  function aplicarClima(codigo, nomeCidade) {
+    const ehChuva =
+      (codigo >= 51 && codigo <= 65) || (codigo >= 80 && codigo <= 82);
+    const ehTempestade = codigo >= 95 && codigo <= 99;
+    const ehNeve =
+      (codigo >= 71 && codigo <= 77) || codigo === 85 || codigo === 86;
+    const ehNevoeiro = codigo === 45 || codigo === 48;
+    const ehGaroaGelada =
+      codigo === 56 || codigo === 57 || codigo === 66 || codigo === 67;
+
+    if (ehTempestade) {
+      setClimaMult(1.5);
+      setClimaInfo({
+        cidade: nomeCidade,
+        condicao: `Tempestade (codigo ${codigo}) - Adrenalina! Producao +50%`,
+      });
+    } else if (ehChuva) {
+      setClimaMult(1.3);
+      setClimaInfo({
+        cidade: nomeCidade,
+        condicao: `Chuva (codigo ${codigo}) - Bananeiras adoram agua! Producao +30%`,
+      });
+    } else if (ehGaroaGelada) {
+      setClimaMult(0.9);
+      setClimaInfo({
+        cidade: nomeCidade,
+        condicao: `Garoa gelada (codigo ${codigo}) - Macacos enrolados. Producao -10%`,
+      });
+    } else if (ehNeve) {
+      setClimaMult(0.85);
+      setClimaInfo({
+        cidade: nomeCidade,
+        condicao: `Neve (codigo ${codigo}) - Macacos com frio trabalham menos. Producao -15%`,
+      });
+    } else if (ehNevoeiro) {
+      setClimaMult(0.95);
+      setClimaInfo({
+        cidade: nomeCidade,
+        condicao: `Nevoeiro (codigo ${codigo}) - Macacos perdidos. Producao -5%`,
+      });
+    } else {
+      setClimaMult(1.0);
+      setClimaInfo({
+        cidade: nomeCidade,
+        condicao: `Ceu limpo (codigo ${codigo}) - Producao normal`,
+      });
+    }
+  }
+
+  // Busca clima + nome real da cidade para coordenadas dadas.
+  // Se nomeForcado for passado (ex: nos botoes de teste), usa ele em vez de geocodificar.
+  async function buscarClimaCidade(lat, lon, nomeForcado) {
+    const [codigo, nomeCidade] = await Promise.all([
+      apiService.obterClimaAtual(lat, lon),
+      nomeForcado
+        ? Promise.resolve(nomeForcado)
+        : apiService.obterNomeCidade(lat, lon),
+    ]);
+    aplicarClima(codigo, nomeCidade);
+  }
+
+  // Ao iniciar o jogo, pega a localizacao real do usuario via navegador
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (posicao) => {
+          const { latitude, longitude } = posicao.coords;
+          buscarClimaCidade(latitude, longitude);
+        },
+        () => buscarClimaCidade(-25.4284, -49.2733, "Curitiba (padrao)"),
+      );
+    } else {
+      buscarClimaCidade(-25.4284, -49.2733, "Curitiba (padrao)");
+    }
+  }, []);
+
   function clicarMacaco() {
     cliquesNoSegundo.current += 1;
     setBananas((b) => {
@@ -283,12 +390,10 @@ export function GameProvider({ children }) {
     setPowerupsComprados((c) => ({ ...c, [item.id]: true }));
   }
 
-  // Compra item permanente com dinheiro real e salva imediatamente no Firebase
   async function comprarPermanente(item) {
     if (item.tipo !== "timeskip" && permanentesComprados[item.id]) return;
     if (dinheiro < item.preco) return;
 
-    // Debita o dinheiro
     const novoDinheiro = Math.round((dinheiro - item.preco) * 100) / 100;
     setDinheiro(novoDinheiro);
 
@@ -302,7 +407,6 @@ export function GameProvider({ children }) {
       setPermanentesComprados((c) => ({ ...c, [item.id]: true }));
     }
 
-    // Salva imediatamente após a compra
     await salvarJogo();
   }
 
@@ -316,7 +420,6 @@ export function GameProvider({ children }) {
     setVenceu(false);
     setCps(0);
     cliquesNoSegundo.current = 0;
-    // Não reseta dinheiro — saldo real não volta ao reiniciar
   }
 
   const valor = {
@@ -332,6 +435,8 @@ export function GameProvider({ children }) {
     cps,
     multGlobal,
     carregando,
+    climaInfo,
+    buscarClimaCidade,
     clicarMacaco,
     precoProducao,
     comprarProducao,
@@ -339,6 +444,8 @@ export function GameProvider({ children }) {
     comprarPermanente,
     salvarJogo,
     reiniciar,
+    fotoPerfil,
+    salvarFotoPerfil,
   };
 
   return <GameContext.Provider value={valor}>{children}</GameContext.Provider>;

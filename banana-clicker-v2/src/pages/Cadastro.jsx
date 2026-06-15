@@ -9,26 +9,37 @@ export default function Cadastro() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
   const navigate = useNavigate();
 
   async function lidarComCadastro(e) {
     e.preventDefault();
     setErro("");
 
+    // Validação manual
+    if (!nome || !nomePerfil || !email || !senha) {
+      setErro("Preencha todos os campos.");
+      return;
+    }
+    if (!email.includes("@") || !email.includes(".")) {
+      setErro("Insira um endereço de e-mail válido.");
+      return;
+    }
+
     const regexSenha =
       /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     if (!regexSenha.test(senha)) {
       setErro(
-        "Senha deve ter 8+ caracteres, uma maiúscula, um número e um símbolo.",
+        "A senha deve ter 8+ caracteres, uma maiúscula, um número e um símbolo.",
       );
       return;
     }
 
+    setCarregando(true);
     try {
       const credencial = await authService.cadastrar(email, senha);
       const usuario = credencial.user;
 
-      // Cria o documento do jogador no Firestore via serviço com progresso inicial zerado
       await dbService.criarPerfil(usuario.uid, {
         nome,
         nomePerfil,
@@ -45,9 +56,15 @@ export default function Cadastro() {
         },
       });
 
-      navigate("/"); // Vai direto para o jogo após cadastrar
+      navigate("/");
     } catch (error) {
-      setErro("Erro ao criar conta: " + error.message);
+      if (error.code === "auth/email-already-in-use") {
+        setErro("Este e-mail já está cadastrado.");
+      } else {
+        setErro("Erro ao criar conta: " + error.message);
+      }
+    } finally {
+      setCarregando(false);
     }
   }
 
@@ -57,14 +74,14 @@ export default function Cadastro() {
         <h1 style={styles.titulo}>🍌 Banana Clicker</h1>
         <h2 style={styles.subtitulo}>Criar Conta</h2>
 
-        <form onSubmit={lidarComCadastro} style={styles.form}>
+        {/* noValidate desativa os balões padrão do navegador */}
+        <form onSubmit={lidarComCadastro} style={styles.form} noValidate>
           <input
             style={styles.input}
             type="text"
             placeholder="Nome Completo"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            required
           />
           <input
             style={styles.input}
@@ -72,7 +89,6 @@ export default function Cadastro() {
             placeholder="Apelido"
             value={nomePerfil}
             onChange={(e) => setNomePerfil(e.target.value)}
-            required
           />
           <input
             style={styles.input}
@@ -80,7 +96,6 @@ export default function Cadastro() {
             placeholder="E-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
           />
           <input
             style={styles.input}
@@ -88,13 +103,12 @@ export default function Cadastro() {
             placeholder="Senha"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
-            required
           />
 
           {erro && <p style={styles.erro}>{erro}</p>}
 
-          <button style={styles.btn} type="submit">
-            Cadastrar
+          <button style={styles.btn} type="submit" disabled={carregando}>
+            {carregando ? "Cadastrando..." : "Cadastrar"}
           </button>
         </form>
 
@@ -135,7 +149,7 @@ const styles = {
     fontFamily: "monospace",
     fontSize: 14,
   },
-  erro: { color: "red", fontSize: 13, margin: 0 },
+  erro: { color: "red", fontSize: 13, margin: 0, fontWeight: "bold" },
   btn: {
     padding: "10px",
     background: "#222",

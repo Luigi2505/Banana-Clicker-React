@@ -10,6 +10,7 @@ import Loja from "./pages/Loja";
 import Ranking from "./pages/Ranking";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
+import Perfil from "./pages/Perfil";
 
 export default function App() {
   const [usuario, setUsuario] = useState(null);
@@ -65,7 +66,9 @@ export default function App() {
             <Route path="/" element={<Jogar />} />
             <Route path="/loja" element={<Loja />} />
             <Route path="/ranking" element={<Ranking />} />
-            
+            {/* ROTA DO PERFIL MOVIDA PARA DENTRO DO ROUTES */}
+            <Route path="/perfil" element={<Perfil />} />
+
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
@@ -76,21 +79,29 @@ export default function App() {
 }
 
 const styles = {
-  app: { minHeight: "100vh", display: "flex", flexDirection: "column" },
-  main: { flex: 1 },
+  app: {
+    height: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+  main: {
+    flex: 1,
+    minHeight: 0,
+    overflow: "hidden",
+  },
   authContainer: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    minHeight: "100vh",
+    height: "100vh",
   },
   toggleButton: {
     marginTop: "20px",
-    background: "none",
-    border: "none",
-    color: "blue",
+    padding: "10px",
     cursor: "pointer",
-    textDecoration: "underline",
+    background: "transparent",
+    border: "1px solid #222",
   },
 };
