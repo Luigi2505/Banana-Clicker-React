@@ -242,7 +242,7 @@ export default function Perfil() {
                   <th style={styles.th}>Pos</th>
                   <th style={styles.th}>Data</th>
                   <th style={styles.th}>Tempo Gasto</th>
-                  <th style={styles.th}>Bananas Geras</th>
+                  <th style={styles.th}>Itens Comprados</th>
                   <th style={styles.th}>Prod. Final</th>
                 </tr>
               </thead>
@@ -259,7 +259,7 @@ export default function Perfil() {
                       <strong>{formatarTempo(run.tempoMs)}</strong>
                     </td>
                     <td style={styles.td}>
-                      🍌 {Math.floor(run.bananasTotais).toLocaleString()}
+                      🏭 {run.totalProducao || 0} | ⚡ {run.totalPowerups || 0}
                     </td>
                     <td style={styles.td}>⏱ {run.porSegundoFinal}/s</td>
                   </tr>

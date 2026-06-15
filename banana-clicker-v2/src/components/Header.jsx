@@ -4,10 +4,11 @@ import { auth } from "../firebase";
 import { useGame } from "../context/GameContext";
 
 export default function Header() {
-  const { bananas, nomePerfil } = useGame();
+  const { bananas, nomePerfil, salvarJogo } = useGame();
   const location = useLocation();
 
   async function sair() {
+    await salvarJogo(); // Força a gravação imediata das bananas atuais no Firestore
     await signOut(auth);
     window.location.reload();
   }

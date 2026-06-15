@@ -11,7 +11,7 @@ export const ITENS_PRODUCAO = [
     nome: "Macaquinho Ajudante",
     imagem: "/images/macaco.png",
     preco: 10,
-    bananasSegundo: 1,
+    bananasSegundo: 10000,
     canto: "superior-esquerdo",
   },
   {
@@ -116,7 +116,7 @@ export function GameProvider({ children }) {
   });
 
   const cliquesNoSegundo = useRef(0);
-  const multGlobal = climaMult; // Removida a interferência de itens premium
+  const multGlobal = climaMult;
 
   useEffect(() => {
     const carregarProgresso = async () => {
@@ -296,14 +296,35 @@ export function GameProvider({ children }) {
     setPowerupsComprados((c) => ({ ...c, [item.id]: true }));
   }
 
+  // Função de Cheat para testes
+  function hackBananas() {
+    setBananas((b) => {
+      const novo = b + 1000000;
+      if (novo >= META) setVenceu(true);
+      return novo;
+    });
+  }
+
   function reiniciar(salvarHistorico = false) {
     if (salvarHistorico) {
       const tempoMs = Date.now() - dataInicioRun;
+
+      // Conta o total de itens de produção
+      const totalProducao = Object.values(qtdProducao).reduce(
+        (acc, val) => acc + val,
+        0,
+      );
+
+      // Conta o total de powerups ativados
+      const totalPowerups =
+        Object.values(powerupsComprados).filter(Boolean).length;
+
       const novaRun = {
         id: Date.now(),
         data: new Date().toISOString(),
         tempoMs,
-        bananasTotais: bananas,
+        totalProducao,
+        totalPowerups,
         porSegundoFinal: porSegundo,
       };
 
@@ -346,6 +367,7 @@ export function GameProvider({ children }) {
     reiniciar,
     fotoPerfil,
     salvarFotoPerfil,
+    hackBananas,
   };
 
   return <GameContext.Provider value={valor}>{children}</GameContext.Provider>;
