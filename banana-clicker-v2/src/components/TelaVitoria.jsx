@@ -1,13 +1,13 @@
 import { useGame } from "../context/GameContext";
 import { useNavigate } from "react-router-dom";
 
-// Tela de vitória — aparece sobre tudo quando o jogador atinge a meta
 export default function TelaVitoria() {
   const { bananas, porSegundo, reiniciar } = useGame();
   const navigate = useNavigate();
 
   function handleReiniciar() {
-    reiniciar();
+    // Passamos 'true' para indicar que essa reinicialização foi uma vitória legítima
+    reiniciar(true);
     navigate("/");
   }
 
@@ -16,15 +16,20 @@ export default function TelaVitoria() {
       <div style={styles.caixa}>
         <p style={styles.emoji}>🎉🐵🎉</p>
         <h1 style={styles.titulo}>VOCE VENCEU!</h1>
-        <p style={styles.sub}>Você juntou 50.000 bananas!</p>
+        <p style={styles.sub}>Você atingiu a meta do Bananal!</p>
 
         <div style={styles.stats}>
-          <p>🍌 Bananas totais: <strong>{Math.floor(bananas).toLocaleString()}</strong></p>
-          <p>⏱ Produção final: <strong>{porSegundo}/s</strong></p>
+          <p>
+            🍌 Bananas totais:{" "}
+            <strong>{Math.floor(bananas).toLocaleString()}</strong>
+          </p>
+          <p>
+            ⏱ Produção final: <strong>{porSegundo}/s</strong>
+          </p>
         </div>
 
         <button style={styles.btn} onClick={handleReiniciar}>
-          ↺ Jogar de novo
+          ↺ Guardar Recorde e Jogar de Novo
         </button>
       </div>
     </div>
@@ -48,9 +53,9 @@ const styles = {
     textAlign: "center",
     maxWidth: 400,
   },
-  emoji:  { fontSize: 48, margin: "0 0 8px" },
+  emoji: { fontSize: 48, margin: "0 0 8px" },
   titulo: { fontSize: 32, margin: "0 0 8px" },
-  sub:    { fontSize: 16, color: "#555", margin: "0 0 20px" },
+  sub: { fontSize: 16, color: "#555", margin: "0 0 20px" },
   stats: {
     background: "#f5f5f5",
     border: "1px solid #ddd",
@@ -61,7 +66,7 @@ const styles = {
   },
   btn: {
     padding: "10px 32px",
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "monospace",
     background: "#222",
     color: "#fff",

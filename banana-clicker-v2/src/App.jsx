@@ -7,7 +7,6 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Jogar from "./pages/Jogar";
 import Loja from "./pages/Loja";
-import Ranking from "./pages/Ranking";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import Perfil from "./pages/Perfil";
@@ -65,10 +64,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Jogar />} />
             <Route path="/loja" element={<Loja />} />
-            <Route path="/ranking" element={<Ranking />} />
-            {/* ROTA DO PERFIL MOVIDA PARA DENTRO DO ROUTES */}
             <Route path="/perfil" element={<Perfil />} />
-
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>

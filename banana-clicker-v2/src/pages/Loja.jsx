@@ -1,10 +1,5 @@
 import { useState } from "react";
-import { useGame } from "../context/GameContext";
-import {
-  ITENS_PRODUCAO,
-  ITENS_POWERUP,
-  ITENS_PERMANENTES,
-} from "../context/GameContext";
+import { useGame, ITENS_PRODUCAO, ITENS_POWERUP } from "../context/GameContext";
 import ItemLoja from "../components/ItemLoja";
 
 export default function Loja() {
@@ -12,14 +7,11 @@ export default function Loja() {
 
   const {
     bananas,
-    dinheiro,
     qtdProducao,
     powerupsComprados,
-    permanentesComprados,
     precoProducao,
     comprarProducao,
     comprarPowerUp,
-    comprarPermanente,
   } = useGame();
 
   const abaStyle = (nome) => ({
@@ -44,12 +36,6 @@ export default function Loja() {
         </button>
         <button style={abaStyle("powerup")} onClick={() => setAba("powerup")}>
           ⚡ Power-ups
-        </button>
-        <button
-          style={abaStyle("permanente")}
-          onClick={() => setAba("permanente")}
-        >
-          💎 Itens Permanentes
         </button>
       </div>
 
@@ -88,37 +74,6 @@ export default function Loja() {
             />
           );
         })}
-
-      {/* Aba: Itens Permanentes */}
-      {aba === "permanente" && (
-        <div>
-          <div style={styles.saldoBox}>
-            💰 Seu saldo: <strong>R$ {dinheiro.toFixed(2)}</strong>
-            <span style={styles.aviso}>
-              {" "}
-              — Pagamento real será integrado em breve
-            </span>
-          </div>
-
-          {ITENS_PERMANENTES.map((item) => {
-            const jaComprou =
-              item.tipo !== "timeskip" && permanentesComprados[item.id];
-            const podePagar = dinheiro >= item.preco;
-            return (
-              <ItemLoja
-                key={item.id}
-                emoji={item.emoji}
-                nome={item.nome}
-                descricao={`R$ ${item.preco.toFixed(2)} — ${item.descricao}`}
-                badge={jaComprou ? "✓" : item.tipo === "timeskip" ? "+" : "—"}
-                podePagar={podePagar}
-                jaComprou={jaComprou}
-                onComprar={() => comprarPermanente(item)}
-              />
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }
@@ -132,12 +87,4 @@ const styles = {
     paddingBottom: 8,
   },
   abas: { display: "flex", gap: 4, marginBottom: 16 },
-  saldoBox: {
-    background: "#f5f5f5",
-    border: "1px solid #ddd",
-    padding: "8px 12px",
-    fontSize: 13,
-    marginBottom: 12,
-  },
-  aviso: { fontSize: 11, color: "#888" },
 };

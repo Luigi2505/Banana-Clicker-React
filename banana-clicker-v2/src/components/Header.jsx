@@ -4,11 +4,10 @@ import { auth } from "../firebase";
 import { useGame } from "../context/GameContext";
 
 export default function Header() {
-  const { bananas, dinheiro, nomePerfil, salvarJogo } = useGame();
+  const { bananas, nomePerfil } = useGame();
   const location = useLocation();
 
   async function sair() {
-    // Força o logout imediatamente e recarrega a página para limpar a memória
     await signOut(auth);
     window.location.reload();
   }
@@ -35,18 +34,15 @@ export default function Header() {
         <Link to="/loja" style={linkStyle("/loja")}>
           🛒 Loja
         </Link>
-        <Link to="/ranking" style={linkStyle("/ranking")}>
-          🏆 Ranking
-        </Link>
-        {/* LINK DO PERFIL MOVIDO PARA DENTRO DO NAV */}
         <Link to="/perfil" style={linkStyle("/perfil")}>
           👤 Perfil
         </Link>
       </nav>
 
       <div style={styles.direita}>
-        <span style={styles.saldo}>🍌 {Math.floor(bananas)}</span>
-        <span style={styles.dinheiro}>💰 R$ {dinheiro.toFixed(2)}</span>
+        <span style={styles.saldo}>
+          🍌 {Math.floor(bananas).toLocaleString()}
+        </span>
         <button style={styles.sairBtn} onClick={sair}>
           Sair
         </button>
@@ -81,11 +77,6 @@ const styles = {
   saldo: {
     fontWeight: "bold",
     fontSize: "clamp(12px, 2.2vw, 15px)",
-    whiteSpace: "nowrap",
-  },
-  dinheiro: {
-    fontSize: "clamp(10px, 2vw, 13px)",
-    color: "#555",
     whiteSpace: "nowrap",
   },
   sairBtn: {

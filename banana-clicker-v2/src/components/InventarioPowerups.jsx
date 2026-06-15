@@ -1,58 +1,32 @@
 import { useState } from "react";
-import { ITENS_POWERUP, ITENS_PERMANENTES } from "../context/GameContext";
-import { useGame } from "../context/GameContext";
+import { ITENS_POWERUP, useGame } from "../context/GameContext";
 
 export default function InventarioPowerups() {
-  const { powerupsComprados, permanentesComprados } = useGame();
+  const { powerupsComprados } = useGame();
   const [hoverId, setHoverId] = useState(null);
 
   const powerupsAtivos = ITENS_POWERUP.filter((pu) => powerupsComprados[pu.id]);
-  const permanentesAtivos = ITENS_PERMANENTES.filter(
-    (it) => it.tipo !== "timeskip" && permanentesComprados[it.id],
-  );
 
-  if (powerupsAtivos.length === 0 && permanentesAtivos.length === 0)
-    return null;
+  if (powerupsAtivos.length === 0) return null;
 
   return (
     <div style={styles.container}>
-      {powerupsAtivos.length > 0 && (
-        <div style={styles.barra}>
-          <p style={styles.titulo}>Power-ups:</p>
-          <div style={styles.lista}>
-            {powerupsAtivos.map((pu) => (
-              <ItemInventario
-                key={pu.id}
-                id={pu.id}
-                emoji={pu.emoji}
-                nome={pu.nome}
-                descricao={pu.descricao}
-                hoverId={hoverId}
-                setHoverId={setHoverId}
-              />
-            ))}
-          </div>
+      <div style={styles.barra}>
+        <p style={styles.titulo}>Power-ups:</p>
+        <div style={styles.lista}>
+          {powerupsAtivos.map((pu) => (
+            <ItemInventario
+              key={pu.id}
+              id={pu.id}
+              emoji={pu.emoji}
+              nome={pu.nome}
+              descricao={pu.descricao}
+              hoverId={hoverId}
+              setHoverId={setHoverId}
+            />
+          ))}
         </div>
-      )}
-
-      {permanentesAtivos.length > 0 && (
-        <div style={styles.barra}>
-          <p style={styles.titulo}>Permanentes:</p>
-          <div style={styles.lista}>
-            {permanentesAtivos.map((it) => (
-              <ItemInventario
-                key={it.id}
-                id={it.id}
-                emoji={it.emoji}
-                nome={it.nome}
-                descricao={it.descricao}
-                hoverId={hoverId}
-                setHoverId={setHoverId}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -76,7 +50,6 @@ function ItemInventario({ id, emoji, nome, descricao, hoverId, setHoverId }) {
       >
         {emoji}
       </span>
-
       {hoverId === id && (
         <div style={styles.tooltip}>
           <strong>{nome}</strong>
@@ -90,7 +63,6 @@ function ItemInventario({ id, emoji, nome, descricao, hoverId, setHoverId }) {
 const styles = {
   container: {
     position: "absolute",
-    // Fica acima da barra de meta, com margem segura em telas pequenas
     bottom: "clamp(60px, 12vh, 90px)",
     left: "50%",
     transform: "translateX(-50%)",
@@ -144,7 +116,6 @@ const styles = {
     fontSize: 12,
     whiteSpace: "nowrap",
     zIndex: 20,
-    pointerEvents: "none",
     boxShadow: "2px 2px 0 #ccc",
     maxWidth: "60vw",
     overflow: "hidden",

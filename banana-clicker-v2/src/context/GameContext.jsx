@@ -47,7 +47,7 @@ export const ITENS_POWERUP = [
     emoji: "🧤",
     preco: 30,
     multiplicador: 1.2,
-    descricao: "Suas maos ficam mais rapidas. Clique vale x1.2!",
+    descricao: "Clique vale x1.2!",
   },
   {
     id: "u2",
@@ -55,7 +55,7 @@ export const ITENS_POWERUP = [
     emoji: "⚡",
     preco: 150,
     multiplicador: 1.5,
-    descricao: "Velocidade pura nos dedos. Clique vale x1.5!",
+    descricao: "Clique vale x1.5!",
   },
   {
     id: "u3",
@@ -63,7 +63,7 @@ export const ITENS_POWERUP = [
     emoji: "🪄",
     preco: 400,
     multiplicador: 2.0,
-    descricao: "Magia bananeira! Clique vale x2.0!",
+    descricao: "Clique vale x2.0!",
   },
   {
     id: "u4",
@@ -71,7 +71,7 @@ export const ITENS_POWERUP = [
     emoji: "🦾",
     preco: 1000,
     multiplicador: 3.0,
-    descricao: "Tecnologia de ponta. Clique vale x3.0!",
+    descricao: "Clique vale x3.0!",
   },
   {
     id: "u5",
@@ -79,53 +79,7 @@ export const ITENS_POWERUP = [
     emoji: "👑",
     preco: 3000,
     multiplicador: 5.0,
-    descricao: "O poder supremo dos macacos. Clique vale x5.0!",
-  },
-];
-
-export const ITENS_PERMANENTES = [
-  {
-    id: "ip1",
-    nome: "Salto Temporal — 4h",
-    emoji: "⏩",
-    preco: 2.99,
-    descricao: "Recebe instantaneamente 4h de producao idle.",
-    tipo: "timeskip",
-    horas: 4,
-  },
-  {
-    id: "ip2",
-    nome: "Salto Temporal — 8h",
-    emoji: "⏭",
-    preco: 4.99,
-    descricao: "Recebe instantaneamente 8h de producao idle.",
-    tipo: "timeskip",
-    horas: 8,
-  },
-  {
-    id: "ip3",
-    nome: "Salto Temporal — 24h",
-    emoji: "🕰",
-    preco: 9.99,
-    descricao: "Recebe instantaneamente 24h de producao idle.",
-    tipo: "timeskip",
-    horas: 24,
-  },
-  {
-    id: "ip4",
-    nome: "DNA Mutante",
-    emoji: "🧬",
-    preco: 14.99,
-    descricao: "Multiplica toda geracao de bananas por 2x para sempre.",
-    tipo: "multiplicador",
-  },
-  {
-    id: "ip5",
-    nome: "Macaco Ciborgue",
-    emoji: "🤖",
-    preco: 7.99,
-    descricao: "Clica automaticamente 10x por segundo enquanto jogar.",
-    tipo: "autoclicker",
+    descricao: "Clique vale x5.0!",
   },
 ];
 
@@ -147,14 +101,14 @@ export function GameProvider({ children }) {
     p4: 0,
   });
   const [powerupsComprados, setPowerupsComprados] = useState({});
-  const [permanentesComprados, setPermanentesComprados] = useState({});
-  const [dinheiro, setDinheiro] = useState(0);
   const [nomePerfil, setNomePerfil] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [venceu, setVenceu] = useState(false);
   const [cps, setCps] = useState(0);
 
-  // Clima — precisa ser declarado ANTES do multGlobal usar
+  const [historicoRuns, setHistoricoRuns] = useState([]);
+  const [dataInicioRun, setDataInicioRun] = useState(Date.now());
+
   const [climaMult, setClimaMult] = useState(1);
   const [climaInfo, setClimaInfo] = useState({
     cidade: "Carregando...",
@@ -162,11 +116,8 @@ export function GameProvider({ children }) {
   });
 
   const cliquesNoSegundo = useRef(0);
+  const multGlobal = climaMult; // Removida a interferência de itens premium
 
-  // multGlobal pode usar climaMult com seguranca pois ja foi declarado acima
-  const multGlobal = (permanentesComprados["ip4"] ? 2 : 1) * climaMult;
-
-  // ── CARREGAR PROGRESSO DO FIREBASE AO INICIAR ──
   useEffect(() => {
     const carregarProgresso = async () => {
       const usuario = auth.currentUser;
@@ -174,7 +125,6 @@ export function GameProvider({ children }) {
         setCarregando(false);
         return;
       }
-
       try {
         const dados = await dbService.carregarProgresso(usuario.uid);
         if (dados && dados.progresso) {
@@ -182,12 +132,13 @@ export function GameProvider({ children }) {
           setFotoPerfil(dados.fotoPerfil || null);
           setNomePerfil(dados.nomePerfil || "");
           setBananas(p.bananas || 0);
-          setDinheiro(p.dinheiro || 0);
           setPorClique(p.porClique || 1);
           setPorSegundo(p.porSegundo || 0);
           setQtdProducao(p.qtdProducao || { p1: 0, p2: 0, p3: 0, p4: 0 });
           setPowerupsComprados(p.powerupsComprados || {});
-          setPermanentesComprados(p.permanentesComprados || {});
+
+          setHistoricoRuns(p.historicoRuns || []);
+          setDataInicioRun(p.dataInicioRun || Date.now());
         }
       } catch (error) {
         console.error(
@@ -195,34 +146,30 @@ export function GameProvider({ children }) {
           error,
         );
       } finally {
-        // Isso garante que o jogo DESTRAVE mesmo se o Firebase explodir
         setCarregando(false);
       }
     };
-
     carregarProgresso();
   }, []);
 
-  // ── SALVAR NO FIREBASE ──
   const salvarJogo = async () => {
     const usuario = auth.currentUser;
     if (!usuario) return;
     try {
       await dbService.salvarProgresso(usuario.uid, {
         bananas,
-        dinheiro,
         porClique,
         porSegundo,
         qtdProducao,
         powerupsComprados,
-        permanentesComprados,
+        historicoRuns,
+        dataInicioRun,
       });
     } catch (error) {
       console.error("Erro ao salvar:", error);
     }
   };
 
-  // Salva a foto de perfil (base64) no Firestore
   async function salvarFotoPerfil(base64) {
     const usuario = auth.currentUser;
     if (!usuario) return;
@@ -230,7 +177,6 @@ export function GameProvider({ children }) {
     setFotoPerfil(base64);
   }
 
-  // ── AUTO-SAVE A CADA 30 SEGUNDOS ──
   useEffect(() => {
     if (carregando) return;
     const intervalo = setInterval(salvarJogo, 30000);
@@ -238,15 +184,13 @@ export function GameProvider({ children }) {
   }, [
     carregando,
     bananas,
-    dinheiro,
     porClique,
     porSegundo,
     qtdProducao,
     powerupsComprados,
-    permanentesComprados,
+    historicoRuns,
   ]);
 
-  // ── PRODUÇÃO AUTOMÁTICA ──
   useEffect(() => {
     const intervalo = setInterval(() => {
       const producao = porSegundo * multGlobal;
@@ -261,20 +205,6 @@ export function GameProvider({ children }) {
     return () => clearInterval(intervalo);
   }, [porSegundo, multGlobal]);
 
-  // ── AUTOCLICKER (Macaco Ciborgue) ──
-  useEffect(() => {
-    if (!permanentesComprados["ip5"]) return;
-    const intervalo = setInterval(() => {
-      setBananas((b) => {
-        const novo = b + porClique * multGlobal * 10;
-        if (novo >= META) setVenceu(true);
-        return novo;
-      });
-    }, 1000);
-    return () => clearInterval(intervalo);
-  }, [permanentesComprados, porClique, multGlobal]);
-
-  // ── CPS ──
   useEffect(() => {
     const intervalo = setInterval(() => {
       setCps(cliquesNoSegundo.current);
@@ -283,9 +213,6 @@ export function GameProvider({ children }) {
     return () => clearInterval(intervalo);
   }, []);
 
-  // ── CLIMA ──
-  // Calcula o multiplicador e a descricao com base no codigo WMO retornado pela API
-  // Tabela de codigos: https://open-meteo.com/en/docs (campo weathercode)
   function aplicarClima(codigo, nomeCidade) {
     const ehChuva =
       (codigo >= 51 && codigo <= 65) || (codigo >= 80 && codigo <= 82);
@@ -298,45 +225,25 @@ export function GameProvider({ children }) {
 
     if (ehTempestade) {
       setClimaMult(1.5);
-      setClimaInfo({
-        cidade: nomeCidade,
-        condicao: `Tempestade (codigo ${codigo}) - Adrenalina! Producao +50%`,
-      });
+      setClimaInfo({ cidade: nomeCidade, condicao: `Tempestade (+50%)` });
     } else if (ehChuva) {
       setClimaMult(1.3);
-      setClimaInfo({
-        cidade: nomeCidade,
-        condicao: `Chuva (codigo ${codigo}) - Bananeiras adoram agua! Producao +30%`,
-      });
+      setClimaInfo({ cidade: nomeCidade, condicao: `Chuva (+30%)` });
     } else if (ehGaroaGelada) {
       setClimaMult(0.9);
-      setClimaInfo({
-        cidade: nomeCidade,
-        condicao: `Garoa gelada (codigo ${codigo}) - Macacos enrolados. Producao -10%`,
-      });
+      setClimaInfo({ cidade: nomeCidade, condicao: `Garoa gelada (-10%)` });
     } else if (ehNeve) {
       setClimaMult(0.85);
-      setClimaInfo({
-        cidade: nomeCidade,
-        condicao: `Neve (codigo ${codigo}) - Macacos com frio trabalham menos. Producao -15%`,
-      });
+      setClimaInfo({ cidade: nomeCidade, condicao: `Neve (-15%)` });
     } else if (ehNevoeiro) {
       setClimaMult(0.95);
-      setClimaInfo({
-        cidade: nomeCidade,
-        condicao: `Nevoeiro (codigo ${codigo}) - Macacos perdidos. Producao -5%`,
-      });
+      setClimaInfo({ cidade: nomeCidade, condicao: `Nevoeiro (-5%)` });
     } else {
       setClimaMult(1.0);
-      setClimaInfo({
-        cidade: nomeCidade,
-        condicao: `Ceu limpo (codigo ${codigo}) - Producao normal`,
-      });
+      setClimaInfo({ cidade: nomeCidade, condicao: `Ceu limpo (Normal)` });
     }
   }
 
-  // Busca clima + nome real da cidade para coordenadas dadas.
-  // Se nomeForcado for passado (ex: nos botoes de teste), usa ele em vez de geocodificar.
   async function buscarClimaCidade(lat, lon, nomeForcado) {
     const [codigo, nomeCidade] = await Promise.all([
       apiService.obterClimaAtual(lat, lon),
@@ -347,7 +254,6 @@ export function GameProvider({ children }) {
     aplicarClima(codigo, nomeCidade);
   }
 
-  // Ao iniciar o jogo, pega a localizacao real do usuario via navegador
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -390,36 +296,32 @@ export function GameProvider({ children }) {
     setPowerupsComprados((c) => ({ ...c, [item.id]: true }));
   }
 
-  async function comprarPermanente(item) {
-    if (item.tipo !== "timeskip" && permanentesComprados[item.id]) return;
-    if (dinheiro < item.preco) return;
+  function reiniciar(salvarHistorico = false) {
+    if (salvarHistorico) {
+      const tempoMs = Date.now() - dataInicioRun;
+      const novaRun = {
+        id: Date.now(),
+        data: new Date().toISOString(),
+        tempoMs,
+        bananasTotais: bananas,
+        porSegundoFinal: porSegundo,
+      };
 
-    const novoDinheiro = Math.round((dinheiro - item.preco) * 100) / 100;
-    setDinheiro(novoDinheiro);
-
-    if (item.tipo === "timeskip") {
-      setBananas((b) => {
-        const novo = b + porSegundo * item.horas * 3600;
-        if (novo >= META) setVenceu(true);
-        return novo;
+      setHistoricoRuns((prev) => {
+        const novoHist = [...prev, novaRun];
+        return novoHist.sort((a, b) => a.tempoMs - b.tempoMs);
       });
-    } else {
-      setPermanentesComprados((c) => ({ ...c, [item.id]: true }));
     }
 
-    await salvarJogo();
-  }
-
-  function reiniciar() {
     setBananas(0);
     setPorClique(1);
     setPorSegundo(0);
     setQtdProducao({ p1: 0, p2: 0, p3: 0, p4: 0 });
     setPowerupsComprados({});
-    setPermanentesComprados({});
     setVenceu(false);
     setCps(0);
     cliquesNoSegundo.current = 0;
+    setDataInicioRun(Date.now());
   }
 
   const valor = {
@@ -427,21 +329,19 @@ export function GameProvider({ children }) {
     porClique,
     porSegundo,
     qtdProducao,
-    dinheiro,
     nomePerfil,
     powerupsComprados,
-    permanentesComprados,
     venceu,
     cps,
     multGlobal,
     carregando,
     climaInfo,
+    historicoRuns,
     buscarClimaCidade,
     clicarMacaco,
     precoProducao,
     comprarProducao,
     comprarPowerUp,
-    comprarPermanente,
     salvarJogo,
     reiniciar,
     fotoPerfil,

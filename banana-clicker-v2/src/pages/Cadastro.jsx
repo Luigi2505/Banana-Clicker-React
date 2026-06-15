@@ -16,9 +16,16 @@ export default function Cadastro() {
     e.preventDefault();
     setErro("");
 
-    // Validação manual
     if (!nome || !nomePerfil || !email || !senha) {
       setErro("Preencha todos os campos.");
+      return;
+    }
+    if (nome.trim().length < 2) {
+      setErro("O Nome Completo deve ter pelo menos 2 caracteres.");
+      return;
+    }
+    if (/\d/.test(nome)) {
+      setErro("O Nome Completo não pode conter números.");
       return;
     }
     if (!email.includes("@") || !email.includes(".")) {
@@ -41,18 +48,18 @@ export default function Cadastro() {
       const usuario = credencial.user;
 
       await dbService.criarPerfil(usuario.uid, {
-        nome,
-        nomePerfil,
-        email,
+        nome: nome.trim(),
+        nomePerfil: nomePerfil.trim(),
+        email: email.trim(),
         dataCriacao: new Date(),
         progresso: {
           bananas: 0,
-          dinheiro: 0,
           porClique: 1,
           porSegundo: 0,
           qtdProducao: { p1: 0, p2: 0, p3: 0, p4: 0 },
           powerupsComprados: {},
-          permanentesComprados: {},
+          historicoRuns: [],
+          dataInicioRun: Date.now(),
         },
       });
 
@@ -74,7 +81,6 @@ export default function Cadastro() {
         <h1 style={styles.titulo}>🍌 Banana Clicker</h1>
         <h2 style={styles.subtitulo}>Criar Conta</h2>
 
-        {/* noValidate desativa os balões padrão do navegador */}
         <form onSubmit={lidarComCadastro} style={styles.form} noValidate>
           <input
             style={styles.input}
